@@ -94,7 +94,7 @@ function apply(){
   const f=fitScale();sc=Math.max(f*.9,Math.min(MAXS,sc));
   stage.style.transform=`translate(${tx}px,${ty}px) scale(${sc})`;
   stage.style.setProperty('--inv',1/sc);
-  $('#ring').style.transform=`scale(${1/sc*Math.max(1,Math.min(2.2,1/sc))})`;
+  $('#ring').style.transform=`scale(${0.8/sc})`;
   $('#tip').style.transform=`scale(${1/sc})`;
 }
 function reset(){sc=fitScale();tx=(wrap.clientWidth-2000*sc)/2;ty=(wrap.clientHeight-1269*sc)/2;apply()}
@@ -109,20 +109,27 @@ wrap.addEventListener('pointermove',e=>{
   ptrs.set(e.pointerId,[e.clientX,e.clientY]);
   if(ptrs.size==2){const [a,b]=[...ptrs.values()];const d=Math.hypot(a[0]-b[0],a[1]-b[1]);const r=wrap.getBoundingClientRect();
     zoomAt((a[0]+b[0])/2-r.left,(a[1]+b[1])/2-r.top,d/pinch0);pinch0=d;moved+=10}});
-const up=e=>{ptrs.delete(e.pointerId);wrap.classList.remove('drag')};
+const up=e=>{
+  // 포인터 캡처 때문에 click 이벤트 대상이 지도로 바뀌므로, 손가락/마우스를 뗀 위치로 직접 판정
+  if(e.type==='pointerup'&&ptrs.size===1&&moved<6){
+    const el=document.elementFromPoint(e.clientX,e.clientY);
+    const h=el&&el.closest('.hit');
+    if(h)select(h.dataset.n,{scroll:true,zoom:false});
+    else if(el&&!el.closest('#ctl'))select(null);
+  }
+  ptrs.delete(e.pointerId);wrap.classList.remove('drag')};
 wrap.addEventListener('pointerup',up);wrap.addEventListener('pointercancel',up);
 $('#zi').onclick=()=>zoomAt(wrap.clientWidth/2,wrap.clientHeight/2,1.4);
 $('#zo').onclick=()=>zoomAt(wrap.clientWidth/2,wrap.clientHeight/2,1/1.4);
 $('#zr').onclick=()=>{saved=null;select(null);reset()};
 $('#cl').onclick=()=>select(null);
 addEventListener('keydown',e=>{if(e.key==='Escape')select(null)});
-wrap.addEventListener('click',e=>{if(!e.target.closest('.hit,#ctl')&&moved<6)select(null)});
 addEventListener('resize',()=>{if(!sel)reset();else apply()});
 
 // ---- 지도 히트영역
 const hits={};
 DATA.forEach(d=>{const h=document.createElement('div');h.className='hit';h.style.left=d.x+'px';h.style.top=d.y+'px';
-  h.onclick=()=>{if(moved<6)select(d.n,{scroll:true,zoom:false})};hits[d.n]=h;stage.appendChild(h)});
+  h.dataset.n=d.n;hits[d.n]=h;stage.appendChild(h)});
 
 let saved=null; // 선택 전 화면 상태 (해제 시 복원)
 function select(n,o={}){
