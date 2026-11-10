@@ -1,2 +1,5 @@
 .DS_Store
 walk_preview.png
+events/*/walk_preview.png
+tools/.bin/
+__pycache__/

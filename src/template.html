@@ -6,7 +6,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="EXPO MAP">
-<title>AICHI SKY EXPO 부스 검색 지도</title>
+<title>__TITLE__</title>
 <style>
 :root{--bg:#f4f5f7;--panel:#fff;--line:#e2e4e8;--txt:#1d2024;--sub:#6b7280;--acc:#e8590c;--hit:rgba(232,89,12,.18)}
 @media(prefers-color-scheme:dark){:root{--bg:#15171a;--panel:#1e2125;--line:#33373d;--txt:#e8eaed;--sub:#9aa0a8}}
@@ -25,7 +25,6 @@ html,body{margin:0;height:100%;background:var(--bg);color:var(--txt);font:14px/1
 .item:hover{background:var(--bg)}
 .item.sel{background:var(--hit)}
 .num{flex:none;min-width:42px;text-align:center;font-weight:700;border-radius:6px;padding:1px 0;color:#fff;font-size:13px}
-.H-C{background:#c9a227}.H-D{background:#5d8a3a}.H-E{background:#2a9d8f}.H-F{background:#5b7fb5}
 .nm{flex:1;min-width:0}
 .nm b{font-weight:600;word-break:break-word}
 .nm small{display:block;color:var(--sub);font-size:12px;word-break:break-word}
@@ -33,8 +32,8 @@ html,body{margin:0;height:100%;background:var(--bg);color:var(--txt);font:14px/1
 .star.on{color:#f5b301}
 #mapwrap{position:relative;overflow:hidden;touch-action:none;background:#fff;cursor:grab}
 #mapwrap.drag{cursor:grabbing}
-#stage{position:absolute;left:0;top:0;width:2000px;height:1269px;transform-origin:0 0}
-#stage img{display:block;width:2000px;height:1269px;user-select:none;-webkit-user-drag:none;pointer-events:none}
+#stage{position:absolute;left:0;top:0;width:__W__px;height:__H__px;transform-origin:0 0}
+#stage img{display:block;width:__W__px;height:__H__px;user-select:none;-webkit-user-drag:none;pointer-events:none}
 .hit{position:absolute;width:30px;height:20px;margin:-10px 0 0 -15px;border-radius:4px;cursor:pointer}
 .hit:hover{background:var(--hit);outline:1px solid var(--acc)}
 .hit.fav::after{content:"★";position:absolute;right:-4px;top:-9px;color:#f5b301;font-size:12px;text-shadow:0 0 2px #000}
@@ -91,12 +90,15 @@ html,body{margin:0;height:100%;background:var(--bg);color:var(--txt);font:14px/1
     <div id="list"></div>
   </div>
   <div id="mapwrap">
-    <div id="stage"><img src="data:image/jpeg;base64,IMG_B64" alt="map"><svg id="route" width="2000" height="1269"><polyline id="rl0" fill="none" stroke="#fff" stroke-linecap="round" stroke-linejoin="round"/><polyline id="rl1" fill="none" stroke="#1971ff" stroke-linecap="round" stroke-linejoin="round"/></svg><div id="me"></div><div id="ring"></div><div id="tip"></div></div>    <div id="ctl"><button id="zi">＋</button><button id="zo">－</button><button id="zr" title="전체보기">⤢</button><button id="cl" title="선택 해제 (Esc)">✕</button></div>
+    <div id="stage"><img src="data:image/jpeg;base64,IMG_B64" alt="map"><svg id="route" width="__W__" height="__H__"><polyline id="rl0" fill="none" stroke="#fff" stroke-linecap="round" stroke-linejoin="round"/><polyline id="rl1" fill="none" stroke="#1971ff" stroke-linecap="round" stroke-linejoin="round"/></svg><div id="me"></div><div id="ring"></div><div id="tip"></div></div>    <div id="ctl"><button id="zi">＋</button><button id="zo">－</button><button id="zr" title="전체보기">⤢</button><button id="cl" title="선택 해제 (Esc)">✕</button></div>
     <div id="hint">드래그: 이동 · 휠/핀치: 확대 · 번호 클릭: 업체 확인</div>
   </div>
 </div>
 <script>
+const EVENT=/*EVENT*/{};
+const MW=EVENT.w,MH=EVENT.h;
 const DATA=/*DATA*/[];
+{const st=document.createElement('style');st.textContent=EVENT.halls.map(h=>`.H-${h.id}{background:${h.color}}`).join('');document.head.appendChild(st)}
 const $=s=>document.querySelector(s);
 const byN=Object.fromEntries(DATA.map(d=>[d.n,d]));
 let favs=new Set();try{favs=new Set(JSON.parse(localStorage.getItem('expoFavs')||'[]'))}catch(e){}
@@ -111,7 +113,7 @@ DATA.forEach(d=>d.key=norm(d.n+' '+d.t+' '+d.s.join(' ')+' '+d.g));
 const wrap=$('#mapwrap'),stage=$('#stage');
 let sc=1,tx=0,ty=0;
 const MAXS=3;
-function fitScale(){return Math.min(wrap.clientWidth/2000,wrap.clientHeight/1269)}
+function fitScale(){return Math.min(wrap.clientWidth/MW,wrap.clientHeight/MH)}
 function apply(){
   const f=fitScale();sc=Math.max(f*.9,Math.min(MAXS,sc));
   stage.style.transform=`translate(${tx}px,${ty}px) scale(${sc})`;
@@ -121,7 +123,7 @@ function apply(){
   $('#me').style.transform=`scale(${0.7/sc})`;
   $('#rl0').style.strokeWidth=9/sc;$('#rl1').style.strokeWidth=5/sc;
 }
-function reset(){sc=fitScale();tx=(wrap.clientWidth-2000*sc)/2;ty=(wrap.clientHeight-1269*sc)/2;apply()}
+function reset(){sc=fitScale();tx=(wrap.clientWidth-MW*sc)/2;ty=(wrap.clientHeight-MH*sc)/2;apply()}
 function zoomAt(px,py,k){const ns=Math.max(fitScale()*.9,Math.min(MAXS,sc*k));k=ns/sc;tx=px-(px-tx)*k;ty=py-(py-ty)*k;sc=ns;apply()}
 wrap.addEventListener('wheel',e=>{e.preventDefault();const r=wrap.getBoundingClientRect();zoomAt(e.clientX-r.left,e.clientY-r.top,e.deltaY<0?1.15:1/1.15)},{passive:false});
 const ptrs=new Map();let moved=0,pinch0=0;
@@ -194,7 +196,7 @@ $('#q').addEventListener('input',e=>{q=e.target.value;
   if(q.trim()&&hall!=='ALL'){hall='ALL';document.querySelectorAll('.chip').forEach(c=>c.classList.toggle('on',c.dataset.h==='ALL'))}
   render();
   const t=norm(q).trim();if(/^\d{3}$/.test(t)&&byN[t])select(t,{zoom:true})});
-$('#chips').innerHTML=['ALL','C','D','E','F','★'].map(h=>`<button class="chip${h==='ALL'?' on':''}" data-h="${h}">${h==='ALL'?'전체':h==='★'?'★ 즐겨찾기':'홀 '+h}</button>`).join('');
+$('#chips').innerHTML=['ALL',...EVENT.halls.map(h=>h.id),'★'].map(h=>`<button class="chip${h==='ALL'?' on':''}" data-h="${h}">${h==='ALL'?'전체':h==='★'?'★ 즐겨찾기':'홀 '+h}</button>`).join('');
 $('#chips').addEventListener('click',e=>{const b=e.target.closest('.chip');if(!b)return;hall=b.dataset.h;document.querySelectorAll('.chip').forEach(c=>c.classList.toggle('on',c===b));render()});
 // ================= 길찾기 =================
 const NAV=/*NAV*/null;
