@@ -24,7 +24,7 @@ for b in exh:
         print('위치 없음(건너뜀):', b['n']); continue
     sub = list(b.get('notes', [])) + [f'・{i}' for i in b.get('items', [])]
     booths.append({'n': b['n'], 'h': hall_of.get(b['n'][0], '?'), 'x': round(c[0]), 'y': round(c[1]),
-                   't': b.get('name', ''), 's': sub, 'g': b.get('group', '')})
+                   't': b.get('name', ''), 's': sub, 'g': b.get('group', ''), 'f': b.get('flag', '')})
 print(len(booths), 'booths')
 
 W, H = Image.open(ev/'map.jpg').size
@@ -35,11 +35,12 @@ pad = np.zeros((gh*CS, gw*CS), bool); pad[:H, :W] = walk[:H, :W]
 cells = pad.reshape(gh, CS, gw, CS).mean(axis=(1, 3)) >= 0.5
 nav = {'cs': CS, 'gw': gw, 'gh': gh, 'b64': base64.b64encode(np.packbits(cells.flatten()).tobytes()).decode()}
 
-meta = {'title': cfg['title'], 'w': W, 'h': H, 'halls': [{'id': h['id'], 'color': h['color']} for h in cfg['halls']]}
+titles = cfg['title'] if isinstance(cfg['title'], dict) else {'ko': cfg['title']}
+meta = {'title': titles, 'w': W, 'h': H, 'halls': [{'id': h['id'], 'color': h['color']} for h in cfg['halls']]}
 img = base64.b64encode((ev/'map.jpg').read_bytes()).decode()
 html = (ROOT/'src'/'template.html').read_text()
 for k, v in {'/*DATA*/[]': json.dumps(booths, ensure_ascii=False), '/*NAV*/null': json.dumps(nav),
-             '/*EVENT*/{}': json.dumps(meta, ensure_ascii=False), 'IMG_B64': img, '__TITLE__': cfg['title'], '__W__': str(W), '__H__': str(H)}.items():
+             '/*EVENT*/{}': json.dumps(meta, ensure_ascii=False), 'IMG_B64': img, '__TITLE__': titles.get('ko', next(iter(titles.values()))), '__W__': str(W), '__H__': str(H)}.items():
     html = html.replace(k, v)
 out.write_text(html)
 print('->', out)

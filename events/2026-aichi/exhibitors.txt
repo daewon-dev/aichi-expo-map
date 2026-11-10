@@ -208,7 +208,7 @@
 333	SOOMLOOM
 334	THIRD Space
 335	北海道物産展
-336	(번호 누락 — 원문상 335 바로 아래 목록, 336으로 추정)
+336	!guess
 ・TENt o TEN
 ・campholic
 ・WHAT WE WANT
@@ -254,7 +254,7 @@
 430	FOLBOT / BYCRUISE / ROUGHGRID / WORTH
 431	どうだい？ って金魚？
 ～いいえ、鯛です～
-501	(원문에 업체명 없음)
+501	!noname
 502	ハピキャンステーション
 ・株式会社ウェルシス
 ・大井川流域in静岡

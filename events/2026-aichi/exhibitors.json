@@ -740,7 +740,7 @@
  },
  {
   "n": "336",
-  "name": "(번호 누락 — 원문상 335 바로 아래 목록, 336으로 추정)",
+  "name": "",
   "items": [
    "TENt o TEN",
    "campholic",
@@ -748,7 +748,8 @@
    "JERRY'S OUTFITTERS",
    "Markeys.outdoor supply",
    "PASTIME FACTORY"
-  ]
+  ],
+  "flag": "guess"
  },
  {
   "n": "337",
@@ -900,7 +901,8 @@
  },
  {
   "n": "501",
-  "name": "(원문에 업체명 없음)"
+  "name": "",
+  "flag": "noname"
  },
  {
   "n": "502",

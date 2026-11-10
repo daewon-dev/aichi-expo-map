@@ -1,5 +1,5 @@
 {
-  "title": "AICHI SKY EXPO 부스 검색 지도",
+  "title": {"ko": "AICHI SKY EXPO 부스 검색 지도", "ja": "AICHI SKY EXPO ブース検索マップ"},
   "halls": [
     {"id": "C", "color": "#c9a227", "prefixes": ["1", "2"]},
     {"id": "D", "color": "#5d8a3a", "prefixes": ["3", "4"]},
