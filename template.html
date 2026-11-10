@@ -45,6 +45,10 @@ html,body{margin:0;height:100%;background:var(--bg);color:var(--txt);font:14px/1
 #ctl{position:absolute;right:10px;bottom:10px;display:flex;flex-direction:column;gap:6px}
 #ctl button{width:38px;height:38px;border-radius:10px;border:1px solid var(--line);background:var(--panel);color:var(--txt);font-size:20px;cursor:pointer}
 #hint{position:absolute;left:10px;bottom:10px;background:rgba(0,0,0,.55);color:#fff;padding:4px 10px;border-radius:8px;font-size:12px}
+#srow{display:flex;gap:8px}
+#srow #q{flex:1;min-width:0;width:auto}
+#navbtn{flex:none;padding:0 12px;border-radius:10px;border:1px solid #1971ff;background:none;color:#1971ff;font-size:14px;font-weight:600;cursor:pointer;white-space:nowrap}
+#navbtn.on{background:#1971ff;color:#fff}
 #route{position:absolute;left:0;top:0;pointer-events:none;overflow:visible}
 #me{position:absolute;display:none;width:28px;height:28px;margin:-14px 0 0 -14px;border-radius:50%;background:#1971ff;border:4px solid #fff;box-shadow:0 0 0 3px #1971ff,0 2px 8px rgba(0,0,0,.5);pointer-events:none}
 #bar{position:absolute;left:10px;right:64px;bottom:10px;display:none;gap:8px;align-items:center;flex-wrap:wrap;background:var(--panel);color:var(--txt);border:1px solid var(--line);border-radius:12px;padding:8px 10px;font-size:13px;box-shadow:0 2px 10px rgba(0,0,0,.25)}
@@ -68,7 +72,7 @@ html,body{margin:0;height:100%;background:var(--bg);color:var(--txt);font:14px/1
 <div id="app">
   <div id="side">
     <div id="top">
-      <input id="q" type="search" placeholder="부스 번호 또는 업체명 (예: 321, UNIFLAME, 커피)" autocomplete="off">
+      <div id="srow"><input id="q" type="search" placeholder="부스 번호 또는 업체명 (예: 321, UNIFLAME)" autocomplete="off"><button id="navbtn">🧭 길찾기</button></div>
       <div id="chips"></div>
       <div id="count"></div>
     </div>
@@ -143,6 +147,9 @@ DATA.forEach(d=>{const h=document.createElement('div');h.className='hit';h.style
 
 let saved=null; // 선택 전 화면 상태 (해제 시 복원)
 function select(n,o={}){
+  if(n&&navMode===1){me=n;navMode=2;updateMe()}
+  else if(n&&navMode===2&&n!==me)navMode=3;
+  else if(!n&&navMode===3)navMode=2;
   if(n&&!sel&&!saved)saved={sc,tx,ty};
   sel=n;const ring=$('#ring'),tip=$('#tip');
   document.querySelectorAll('.item.sel').forEach(e=>e.classList.remove('sel'));
@@ -236,15 +243,17 @@ function smooth(p){
   return out;
 }
 
-let me=null;try{me=localStorage.getItem('expoMe')||null;if(me&&!byN[me])me=null}catch(e){}
-function setMe(n){me=n;try{n?localStorage.setItem('expoMe',n):localStorage.removeItem('expoMe')}catch(e){}
-  updateMe();updateRoute();updateBar()}
+// navMode: 0=꺼짐, 1=출발지 선택 대기, 2=도착지 선택 대기, 3=경로 표시 중
+let me=null,navMode=0;
+function setNav(m){navMode=m;if(m<2)me=null;if(m===0||m===1){clearRoute()}updateMe();updateBar();
+  $('#navbtn').classList.toggle('on',m>0);$('#navbtn').textContent=m>0?'✕ 길찾기 종료':'🧭 길찾기'}
+$('#navbtn').onclick=()=>{if(navMode){setNav(0)}else{const keep=sel;setNav(1);if(keep)select(null);}};
 function updateMe(){const m=$('#me');if(!me){m.style.display='none';return}const d=byN[me];m.style.display='block';m.style.left=d.x+'px';m.style.top=d.y+'px'}
 function clearRoute(){$('#rl0').setAttribute('points','');$('#rl1').setAttribute('points','');routeState=''}
 let routeState='';
 function updateRoute(){
   clearRoute();
-  if(!me||!sel||me===sel)return;
+  if(navMode!==3||!me||!sel||me===sel)return;
   const a=byN[me],b=byN[sel],s=nearestWalk(a.x,a.y),t=nearestWalk(b.x,b.y);
   const raw=s>=0&&t>=0?astar(s,t):null;
   if(!raw){routeState='fail';return}
@@ -260,19 +269,16 @@ function updateRoute(){
 }
 function updateBar(){
   const bar=$('#bar'),hint=$('#hint');
-  if(!sel&&!me){bar.style.display='none';hint.style.display='';return}
+  if(!navMode){bar.style.display='none';hint.style.display='';return}
   hint.style.display='none';bar.style.display='flex';
   let h='';
-  if(me)h+=`<span>📍 내 위치 <b>${me}</b></span>`;
-  if(sel&&me&&sel!==me)h+=routeState==='ok'?`<span>→ <b>${sel}</b> 경로 표시 중</span>`:`<span class="msg">→ ${sel} 경로를 찾지 못했어요</span>`;
-  if(sel&&sel!==me)h+=`<button data-a="me">${me?'여기로 내 위치 변경':'📍 여기를 내 위치로'}</button>`;
-  if(sel&&sel===me)h+=`<span class="msg">현재 선택한 부스예요</span>`;
-  if(me)h+=`<button class="ghost" data-a="nome">내 위치 해제</button>`;
-  if(!me&&sel)h+=`<span class="msg">내 위치를 정하면 길을 안내해요</span>`;
+  if(navMode===1)h=`<span>🧭 <b>출발지</b>를 선택하세요 <span class="msg">(왼쪽 목록이나 지도에서 부스 선택)</span></span>`;
+  else if(navMode===2)h=`<span>📍 출발 <b>${me}</b> · <b>도착지</b>를 선택하세요</span><button class="ghost" data-a="start">출발지 변경</button>`;
+  else h=`<span>📍 <b>${me}</b> → 🎯 <b>${sel}</b> ${routeState==='ok'?'경로 표시 중':'<span class="msg">경로를 찾지 못했어요</span>'}</span><button class="ghost" data-a="start">출발지 변경</button>`;
   bar.innerHTML=h;
 }
 $('#bar').addEventListener('click',e=>{const b=e.target.closest('[data-a]');if(!b)return;
-  if(b.dataset.a==='me')setMe(sel);else setMe(null)});
+  if(b.dataset.a==='start'){setNav(1);select(null)}});
 updateMe();
 reset();render();
 </script>
