@@ -45,6 +45,13 @@ html,body{margin:0;height:100%;background:var(--bg);color:var(--txt);font:14px/1
 #ctl{position:absolute;right:10px;bottom:10px;display:flex;flex-direction:column;gap:6px}
 #ctl button{width:38px;height:38px;border-radius:10px;border:1px solid var(--line);background:var(--panel);color:var(--txt);font-size:20px;cursor:pointer}
 #hint{position:absolute;left:10px;bottom:10px;background:rgba(0,0,0,.55);color:#fff;padding:4px 10px;border-radius:8px;font-size:12px}
+#route{position:absolute;left:0;top:0;pointer-events:none;overflow:visible}
+#me{position:absolute;display:none;width:28px;height:28px;margin:-14px 0 0 -14px;border-radius:50%;background:#1971ff;border:4px solid #fff;box-shadow:0 0 0 3px #1971ff,0 2px 8px rgba(0,0,0,.5);pointer-events:none}
+#bar{position:absolute;left:10px;right:64px;bottom:10px;display:none;gap:8px;align-items:center;flex-wrap:wrap;background:var(--panel);color:var(--txt);border:1px solid var(--line);border-radius:12px;padding:8px 10px;font-size:13px;box-shadow:0 2px 10px rgba(0,0,0,.25)}
+#bar b{font-weight:700}
+#bar button{border:1px solid #1971ff;background:#1971ff;color:#fff;border-radius:8px;padding:6px 10px;font-size:13px;cursor:pointer}
+#bar button.ghost{background:none;color:#1971ff}
+#bar .msg{color:var(--sub)}
 @media(max-width:800px){
  html,body{height:100dvh}
  #app{grid-template-columns:1fr;grid-template-rows:46dvh 1fr;height:100dvh}
@@ -68,7 +75,8 @@ html,body{margin:0;height:100%;background:var(--bg);color:var(--txt);font:14px/1
     <div id="list"></div>
   </div>
   <div id="mapwrap">
-    <div id="stage"><img src="data:image/jpeg;base64,IMG_B64" alt="map"><div id="ring"></div><div id="tip"></div></div>
+    <div id="stage"><img src="data:image/jpeg;base64,IMG_B64" alt="map"><svg id="route" width="2000" height="1269"><polyline id="rl0" fill="none" stroke="#fff" stroke-linecap="round" stroke-linejoin="round"/><polyline id="rl1" fill="none" stroke="#1971ff" stroke-linecap="round" stroke-linejoin="round"/></svg><div id="me"></div><div id="ring"></div><div id="tip"></div></div>
+    <div id="bar"></div>
     <div id="ctl"><button id="zi">＋</button><button id="zo">－</button><button id="zr" title="전체보기">⤢</button><button id="cl" title="선택 해제 (Esc)">✕</button></div>
     <div id="hint">드래그: 이동 · 휠/핀치: 확대 · 번호 클릭: 업체 확인</div>
   </div>
@@ -96,12 +104,14 @@ function apply(){
   stage.style.setProperty('--inv',1/sc);
   $('#ring').style.transform=`scale(${0.8/sc})`;
   $('#tip').style.transform=`scale(${1/sc})`;
+  $('#me').style.transform=`scale(${0.7/sc})`;
+  $('#rl0').style.strokeWidth=9/sc;$('#rl1').style.strokeWidth=5/sc;
 }
 function reset(){sc=fitScale();tx=(wrap.clientWidth-2000*sc)/2;ty=(wrap.clientHeight-1269*sc)/2;apply()}
 function zoomAt(px,py,k){const ns=Math.max(fitScale()*.9,Math.min(MAXS,sc*k));k=ns/sc;tx=px-(px-tx)*k;ty=py-(py-ty)*k;sc=ns;apply()}
 wrap.addEventListener('wheel',e=>{e.preventDefault();const r=wrap.getBoundingClientRect();zoomAt(e.clientX-r.left,e.clientY-r.top,e.deltaY<0?1.15:1/1.15)},{passive:false});
 const ptrs=new Map();let moved=0,pinch0=0;
-wrap.addEventListener('pointerdown',e=>{wrap.setPointerCapture(e.pointerId);ptrs.set(e.pointerId,[e.clientX,e.clientY]);moved=0;wrap.classList.add('drag');
+wrap.addEventListener('pointerdown',e=>{if(e.target.closest('#ctl,#bar'))return;wrap.setPointerCapture(e.pointerId);ptrs.set(e.pointerId,[e.clientX,e.clientY]);moved=0;wrap.classList.add('drag');
   if(ptrs.size==2){const [a,b]=[...ptrs.values()];pinch0=Math.hypot(a[0]-b[0],a[1]-b[1])}});
 wrap.addEventListener('pointermove',e=>{
   if(!ptrs.has(e.pointerId))return;const p=ptrs.get(e.pointerId);
@@ -115,7 +125,7 @@ const up=e=>{
     const el=document.elementFromPoint(e.clientX,e.clientY);
     const h=el&&el.closest('.hit');
     if(h)select(h.dataset.n,{scroll:true,zoom:false});
-    else if(el&&!el.closest('#ctl'))select(null);
+    else if(el&&!el.closest('#ctl,#bar'))select(null);
   }
   ptrs.delete(e.pointerId);wrap.classList.remove('drag')};
 wrap.addEventListener('pointerup',up);wrap.addEventListener('pointercancel',up);
@@ -136,7 +146,7 @@ function select(n,o={}){
   if(n&&!sel&&!saved)saved={sc,tx,ty};
   sel=n;const ring=$('#ring'),tip=$('#tip');
   document.querySelectorAll('.item.sel').forEach(e=>e.classList.remove('sel'));
-  if(!n){ring.style.display=tip.style.display='none';
+  if(!n){ring.style.display=tip.style.display='none';clearRoute();updateBar();
     if(saved){({sc,tx,ty}=saved);saved=null;apply()}return}
   const d=byN[n];
   ring.style.display='block';ring.style.left=d.x+'px';ring.style.top=d.y+'px';
@@ -146,7 +156,7 @@ function select(n,o={}){
   if(o.zoom!==false){const target=Math.max(sc,Math.max(fitScale()*1.3,1.1));sc=Math.min(MAXS,Math.min(target,Math.max(sc,1.1)));tx=wrap.clientWidth/2-d.x*sc;ty=wrap.clientHeight/2-d.y*sc}
   else{ // 화면 밖이면 중앙으로
     const px=d.x*sc+tx,py=d.y*sc+ty;if(px<40||py<40||px>wrap.clientWidth-40||py>wrap.clientHeight-40){tx=wrap.clientWidth/2-d.x*sc;ty=wrap.clientHeight/2-d.y*sc}}
-  apply();
+  apply();updateRoute();updateBar();
 }
 const esc=s=>s.replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 
@@ -169,6 +179,101 @@ $('#q').addEventListener('input',e=>{q=e.target.value;
   const t=norm(q).trim();if(/^\d{3}$/.test(t)&&byN[t])select(t,{zoom:true})});
 $('#chips').innerHTML=['ALL','C','D','E','F','★'].map(h=>`<button class="chip${h==='ALL'?' on':''}" data-h="${h}">${h==='ALL'?'전체':h==='★'?'★ 즐겨찾기':'홀 '+h}</button>`).join('');
 $('#chips').addEventListener('click',e=>{const b=e.target.closest('.chip');if(!b)return;hall=b.dataset.h;document.querySelectorAll('.chip').forEach(c=>c.classList.toggle('on',c===b));render()});
+// ================= 길찾기 =================
+const NAV=/*NAV*/null;
+const CS=NAV.cs,GW=NAV.gw,GH=NAV.gh;
+const grid=new Uint8Array(GW*GH);
+{const bin=atob(NAV.b64);for(let i=0;i<GW*GH;i++)grid[i]=(bin.charCodeAt(i>>3)>>(7-(i&7)))&1}
+// 벽에서 얼마나 떨어져 있는지 (통로 가운데로 길이 나게)
+const dist=new Uint8Array(GW*GH);
+for(let i=0;i<grid.length;i++)dist[i]=grid[i]?255:0;
+for(let y=0;y<GH;y++)for(let x=0;x<GW;x++){const i=y*GW+x;if(!dist[i])continue;let m=dist[i];
+  if(x>0)m=Math.min(m,dist[i-1]+1);if(y>0){m=Math.min(m,dist[i-GW]+1);if(x>0)m=Math.min(m,dist[i-GW-1]+1);if(x<GW-1)m=Math.min(m,dist[i-GW+1]+1)}dist[i]=Math.min(m,255)}
+for(let y=GH-1;y>=0;y--)for(let x=GW-1;x>=0;x--){const i=y*GW+x;if(!dist[i])continue;let m=dist[i];
+  if(x<GW-1)m=Math.min(m,dist[i+1]+1);if(y<GH-1){m=Math.min(m,dist[i+GW]+1);if(x<GW-1)m=Math.min(m,dist[i+GW+1]+1);if(x>0)m=Math.min(m,dist[i+GW-1]+1)}dist[i]=Math.min(m,255)}
+
+function nearestWalk(px,py){
+  const cx=Math.floor(px/CS),cy=Math.floor(py/CS);let best=-1,bd=1e9;
+  for(let r=0;r<80;r++){
+    for(let y=cy-r;y<=cy+r;y++)for(let x=cx-r;x<=cx+r;x++){
+      if(Math.max(Math.abs(x-cx),Math.abs(y-cy))!==r||x<0||y<0||x>=GW||y>=GH)continue;
+      if(!grid[y*GW+x])continue;const d=(x-cx)**2+(y-cy)**2;if(d<bd){bd=d;best=y*GW+x}}
+    if(best>=0&&r>=Math.sqrt(bd)+1)break;
+  }
+  return best;
+}
+// 이진 힙 A*
+function astar(s,t){
+  const N=GW*GH,g=new Float32Array(N).fill(1e9),par=new Int32Array(N).fill(-1),done=new Uint8Array(N);
+  const hx=[],hk=[];
+  const push=(k,v)=>{let i=hk.length;hk.push(k);hx.push(v);while(i>0){const p=(i-1)>>1;if(hk[p]<=hk[i])break;[hk[p],hk[i]]=[hk[i],hk[p]];[hx[p],hx[i]]=[hx[i],hx[p]];i=p}};
+  const pop=()=>{const v=hx[0],lk=hk.pop(),lv=hx.pop();if(hk.length){hk[0]=lk;hx[0]=lv;let i=0;for(;;){let l=2*i+1,r=l+1,m=i;if(l<hk.length&&hk[l]<hk[m])m=l;if(r<hk.length&&hk[r]<hk[m])m=r;if(m===i)break;[hk[m],hk[i]]=[hk[i],hk[m]];[hx[m],hx[i]]=[hx[i],hx[m]];i=m}}return v};
+  const tx_=t%GW,ty_=(t/GW)|0;
+  const h=i=>{const dx=Math.abs((i%GW)-tx_),dy=Math.abs(((i/GW)|0)-ty_);return Math.max(dx,dy)+0.414*Math.min(dx,dy)};
+  g[s]=0;push(h(s),s);
+  while(hk.length){
+    const u=pop();if(done[u])continue;done[u]=1;if(u===t)break;
+    const ux=u%GW,uy=(u/GW)|0;
+    for(let dy=-1;dy<=1;dy++)for(let dx=-1;dx<=1;dx++){
+      if(!dx&&!dy)continue;const x=ux+dx,y=uy+dy;if(x<0||y<0||x>=GW||y>=GH)continue;
+      const v=y*GW+x;if(!grid[v]||done[v])continue;
+      if(dx&&dy&&(!grid[uy*GW+x]||!grid[y*GW+ux]))continue; // 모서리 파고들기 금지
+      const w=(dx&&dy?1.414:1)*(1+0.8*Math.max(0,4-dist[v]));
+      const ng=g[u]+w;if(ng<g[v]){g[v]=ng;par[v]=u;push(ng+h(v),v)}
+    }
+  }
+  if(g[t]>=1e9)return null;
+  const path=[];for(let i=t;i!==-1;i=par[i])path.push(i);return path.reverse();
+}
+function los(a,b){
+  const ax=a%GW,ay=(a/GW)|0,bx=b%GW,by=(b/GW)|0,n=Math.max(Math.abs(bx-ax),Math.abs(by-ay));
+  for(let i=1;i<n;i++){const x=Math.round(ax+(bx-ax)*i/n),y=Math.round(ay+(by-ay)*i/n);if(dist[y*GW+x]<2)return false}
+  return true;
+}
+function smooth(p){
+  const out=[p[0]];let i=0;
+  while(i<p.length-1){let j=p.length-1;while(j>i+1&&!los(p[i],p[j]))j--;out.push(p[j]);i=j}
+  return out;
+}
+
+let me=null;try{me=localStorage.getItem('expoMe')||null;if(me&&!byN[me])me=null}catch(e){}
+function setMe(n){me=n;try{n?localStorage.setItem('expoMe',n):localStorage.removeItem('expoMe')}catch(e){}
+  updateMe();updateRoute();updateBar()}
+function updateMe(){const m=$('#me');if(!me){m.style.display='none';return}const d=byN[me];m.style.display='block';m.style.left=d.x+'px';m.style.top=d.y+'px'}
+function clearRoute(){$('#rl0').setAttribute('points','');$('#rl1').setAttribute('points','');routeState=''}
+let routeState='';
+function updateRoute(){
+  clearRoute();
+  if(!me||!sel||me===sel)return;
+  const a=byN[me],b=byN[sel],s=nearestWalk(a.x,a.y),t=nearestWalk(b.x,b.y);
+  const raw=s>=0&&t>=0?astar(s,t):null;
+  if(!raw){routeState='fail';return}
+  const pts=[[a.x,a.y],...smooth(raw).map(i=>[(i%GW)*CS+CS/2,((i/GW)|0)*CS+CS/2]),[b.x,b.y]];
+  const str=pts.map(p=>p.join(',')).join(' ');
+  $('#rl0').setAttribute('points',str);$('#rl1').setAttribute('points',str);
+  routeState='ok';
+  // 경로 전체가 보이도록 화면 맞춤
+  const xs=pts.map(p=>p[0]),ys=pts.map(p=>p[1]),pad=90;
+  const x0=Math.min(...xs)-pad,x1=Math.max(...xs)+pad,y0=Math.min(...ys)-pad,y1=Math.max(...ys)+pad;
+  sc=Math.min(1.1,wrap.clientWidth/(x1-x0),wrap.clientHeight/(y1-y0));
+  tx=wrap.clientWidth/2-(x0+x1)/2*sc;ty=wrap.clientHeight/2-(y0+y1)/2*sc;apply();
+}
+function updateBar(){
+  const bar=$('#bar'),hint=$('#hint');
+  if(!sel&&!me){bar.style.display='none';hint.style.display='';return}
+  hint.style.display='none';bar.style.display='flex';
+  let h='';
+  if(me)h+=`<span>📍 내 위치 <b>${me}</b></span>`;
+  if(sel&&me&&sel!==me)h+=routeState==='ok'?`<span>→ <b>${sel}</b> 경로 표시 중</span>`:`<span class="msg">→ ${sel} 경로를 찾지 못했어요</span>`;
+  if(sel&&sel!==me)h+=`<button data-a="me">${me?'여기로 내 위치 변경':'📍 여기를 내 위치로'}</button>`;
+  if(sel&&sel===me)h+=`<span class="msg">현재 선택한 부스예요</span>`;
+  if(me)h+=`<button class="ghost" data-a="nome">내 위치 해제</button>`;
+  if(!me&&sel)h+=`<span class="msg">내 위치를 정하면 길을 안내해요</span>`;
+  bar.innerHTML=h;
+}
+$('#bar').addEventListener('click',e=>{const b=e.target.closest('[data-a]');if(!b)return;
+  if(b.dataset.a==='me')setMe(sel);else setMe(null)});
+updateMe();
 reset();render();
 </script>
 </body>

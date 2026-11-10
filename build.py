@@ -24,6 +24,13 @@ for b in booths:
     out.append({'n': b['n'], 'h': HALL[b['n'][0]], 'x': round(c[0]), 'y': round(c[1]),
                 't': ls[0] if ls else '', 's': ls[1:], 'g': b['g']})
 print(len(out), 'booths')
+import numpy as np
+CS = 4
+walk = np.load(HERE/'walk.npy')
+gh, gw = -(-walk.shape[0]//CS), -(-walk.shape[1]//CS)
+pad = np.zeros((gh*CS, gw*CS), bool); pad[:walk.shape[0], :walk.shape[1]] = walk
+cells = pad.reshape(gh, CS, gw, CS).mean(axis=(1, 3)) >= 0.5
+nav = {'cs': CS, 'gw': gw, 'gh': gh, 'b64': base64.b64encode(np.packbits(cells.flatten()).tobytes()).decode()}
 img = base64.b64encode((HERE/'map.jpg').read_bytes()).decode()
-html = (HERE/'template.html').read_text().replace('/*DATA*/[]', json.dumps(out, ensure_ascii=False)).replace('IMG_B64', img)
+html = (HERE/'template.html').read_text().replace('/*DATA*/[]', json.dumps(out, ensure_ascii=False)).replace('/*NAV*/null', json.dumps(nav)).replace('IMG_B64', img)
 (HERE/'index.html').write_text(html)
