@@ -6,6 +6,9 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="EXPO MAP">
+<meta name="theme-color" content="__THEME__">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
 <title>__TITLE__</title>
 <style>
 :root{--bg:#f4f5f7;--panel:#fff;--line:#e2e4e8;--txt:#1d2024;--sub:#6b7280;--acc:#e8590c;--hit:rgba(232,89,12,.18)}
@@ -69,6 +72,27 @@ html,body{margin:0;height:100%;background:var(--bg);color:var(--txt);font:14px/1
 #bar button{border:1px solid #1971ff;background:#1971ff;color:#fff;border-radius:8px;padding:6px 10px;font-size:13px;cursor:pointer}
 #bar button.ghost{background:none;color:#1971ff}
 #bar .msg{color:var(--sub)}
+#detail{display:none;padding:8px 12px;border-bottom:1px solid var(--line)}
+.dhead{display:flex;align-items:center;gap:8px}
+.dhead b{flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.dbtn{flex:none;border:1px solid var(--line);background:none;color:var(--sub);border-radius:8px;padding:3px 9px;font-size:13px;cursor:pointer;white-space:nowrap}
+.dbtn.fav.on{color:#f5b301;border-color:#f5b301}
+.dbtn.vis.on{color:#fff;background:#2ea043;border-color:#2ea043}
+#memo{width:100%;margin-top:6px;padding:6px 9px;border:1px solid var(--line);border-radius:8px;font-size:16px;background:var(--bg);color:var(--txt)}
+.item.vis{opacity:.5}
+.chk{flex:none;border:0;background:none;font-size:18px;color:var(--line);cursor:pointer;padding:0 2px}
+.chk.on{color:#2ea043}
+.memoi{font-size:11px}
+.hit.vis{background:rgba(46,160,67,.28)}
+.hit.vis::before{content:"✓";position:absolute;left:-3px;top:-9px;color:#2ea043;font-size:13px;font-weight:700;text-shadow:0 0 2px #fff}
+.stopn{position:absolute;width:26px;height:26px;margin:-13px 0 0 -13px;border-radius:50%;background:#1971ff;color:#fff;font-weight:700;font-size:14px;display:flex;align-items:center;justify-content:center;border:3px solid #fff;box-shadow:0 2px 6px rgba(0,0,0,.5);pointer-events:none;transform:scale(calc(var(--inv,1)*.8))}
+.tlist{max-height:30dvh;overflow:auto;margin-top:6px}
+.tstop{display:flex;align-items:center;gap:8px;padding:6px 0;cursor:pointer;border-top:1px solid var(--line)}
+.tstop .tn{flex:none;width:22px;height:22px;border-radius:50%;background:#1971ff;color:#fff;font-weight:700;font-size:12px;display:flex;align-items:center;justify-content:center}
+.tstop .tt{flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.tstop .chk{color:#2ea043;border:1px solid #2ea043;border-radius:8px;padding:2px 9px;font-size:14px}
+.nbtn{margin-top:8px;border:1px solid #1971ff;background:#1971ff;color:#fff;border-radius:10px;padding:7px 12px;font-size:14px;font-weight:600;cursor:pointer}
+.nbtn.ghost{background:none;color:#1971ff}
 @media(max-width:800px){
  html,body{height:100dvh}
  #app{grid-template-columns:1fr;grid-template-rows:46dvh 1fr;height:100dvh}
@@ -90,10 +114,11 @@ html,body{margin:0;height:100%;background:var(--bg);color:var(--txt);font:14px/1
       <div id="meta"><span id="count"></span><button id="langbtn"></button></div>
     </div>
     <div id="navpanel"></div>
+    <div id="detail"></div>
     <div id="list"></div>
   </div>
   <div id="mapwrap">
-    <div id="stage"><img src="data:image/jpeg;base64,IMG_B64" alt="map"><svg id="route" width="__W__" height="__H__"><polyline id="rl0" fill="none" stroke="#fff" stroke-linecap="round" stroke-linejoin="round"/><polyline id="rl1" fill="none" stroke="#1971ff" stroke-linecap="round" stroke-linejoin="round"/></svg><div id="me"></div><div id="ring"></div><div id="tip"></div></div>    <div id="ctl"><button id="zi">＋</button><button id="zo">－</button><button id="zr">⤢</button><button id="cl">✕</button></div>
+    <div id="stage"><img src="data:image/jpeg;base64,IMG_B64" alt="map"><svg id="route" width="__W__" height="__H__"><polyline id="rl0" fill="none" stroke="#fff" stroke-linecap="round" stroke-linejoin="round"/><polyline id="rl1" fill="none" stroke="#1971ff" stroke-linecap="round" stroke-linejoin="round"/></svg><div id="stops"></div><div id="me"></div><div id="ring"></div><div id="tip"></div></div>    <div id="ctl"><button id="zi">＋</button><button id="zo">－</button><button id="zr">⤢</button><button id="cl">✕</button></div>
     <div id="hint"></div>
   </div>
 </div>
@@ -108,12 +133,18 @@ ko:{title:'',ph:'부스 번호 또는 업체명 (예: 321, UNIFLAME)',nav:'🧭 
   count:n=>`${n}개 부스`,countFav:' (즐겨찾기)',hint:'드래그: 이동 · 휠/핀치: 확대 · 번호 클릭: 업체 확인',zr:'전체보기',cl:'선택 해제 (Esc)',
   start:'출발',end:'도착',pick:'선택하세요',t1:'① 출발지를 선택하세요',t2:'② 도착지를 선택하세요',t3:'🧭 경로 표시 중',tfail:'경로를 찾지 못했어요',
   h12:'아래 목록이나 지도에서 부스를 누르세요',h3:'출발/도착 칸을 누르면 다시 고를 수 있어요',
-  noname:'(업체명 없음)',guess:'(번호 누락 — 인접 목록으로 추정)',langBtn:'日本語'},
+  noname:'(업체명 없음)',guess:'(번호 누락 — 인접 목록으로 추정)',langBtn:'日本語',
+  vis:'✓ 방문',countVis:' (방문)',visBtn:'✓ 방문함',memoPh:'메모 (예: 의자 살 것)',
+  tourBtn:n=>`★ 즐겨찾기 ${n}곳 순회`,tourTitle:n=>`★ 순회 경로 · ${n}곳`,tourDone:n=>`✓ 방문 완료 ${n}곳`,
+  tourAllDone:'남은 즐겨찾기를 모두 방문했어요 🎉',tourSkip:'갈 수 없어 제외: ',tourHelp:'✓를 누르면 방문 처리하고, 그 부스에서부터 다시 계산해요',tourBack:'← 도착지 선택으로'},
 ja:{title:'',ph:'ブース番号または出展者名（例：321、UNIFLAME）',nav:'🧭 ルート案内',navEnd:'✕ ルート案内を終了',all:'すべて',hall:'ホール ',fav:'★ お気に入り',
   count:n=>`${n}ブース`,countFav:'（お気に入り）',hint:'ドラッグ：移動 ・ ホイール/ピンチ：拡大 ・ 番号をタップ：出展者を確認',zr:'全体表示',cl:'選択解除（Esc）',
   start:'出発',end:'到着',pick:'選んでください',t1:'① 出発地を選んでください',t2:'② 目的地を選んでください',t3:'🧭 ルート表示中',tfail:'ルートが見つかりませんでした',
   h12:'下のリストまたは地図からブースをタップしてください',h3:'出発／到着の欄をタップすると選び直せます',
-  noname:'（出展者名なし）',guess:'（番号欠落のため隣接リストから推定）',langBtn:'한국어'}
+  noname:'（出展者名なし）',guess:'（番号欠落のため隣接リストから推定）',langBtn:'한국어',
+  vis:'✓ 訪問済み',countVis:'（訪問済み）',visBtn:'✓ 訪問済み',memoPh:'メモ（例：椅子を買う）',
+  tourBtn:n=>`★ お気に入り${n}件を巡回`,tourTitle:n=>`★ 巡回ルート ・ ${n}件`,tourDone:n=>`✓ 訪問済み ${n}件`,
+  tourAllDone:'お気に入りをすべて回りました 🎉',tourSkip:'行けないため除外：',tourHelp:'✓を押すと訪問済みにして、そのブースから再計算します',tourBack:'← 目的地選択に戻る'}
 };
 let lang=(navigator.language||'').toLowerCase().startsWith('ja')?'ja':'ko';
 try{const v=localStorage.getItem('expoLang');if(v==='ko'||v==='ja')lang=v}catch(e){}
@@ -122,6 +153,9 @@ const nm=d=>d.t||(d.f?t(d.f):'');
 const byN=Object.fromEntries(DATA.map(d=>[d.n,d]));
 let favs=new Set();try{favs=new Set(JSON.parse(localStorage.getItem('expoFavs')||'[]'))}catch(e){}
 const saveFavs=()=>{try{localStorage.setItem('expoFavs',JSON.stringify([...favs]))}catch(e){}};
+let visited=new Set(),memos={};
+try{visited=new Set(JSON.parse(localStorage.getItem('expoVisited')||'[]'));memos=JSON.parse(localStorage.getItem('expoMemos')||'{}')}catch(e){}
+const saveLS=(k,v)=>{try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}};
 let hall='ALL',sel=null,q='';
 
 // ---- 정규화 (전각→반각, 소문자)
@@ -184,7 +218,7 @@ function select(n,o={}){
   if(n&&!sel&&!saved)saved={sc,tx,ty};
   sel=n;const ring=$('#ring'),tip=$('#tip');
   document.querySelectorAll('.item.sel').forEach(e=>e.classList.remove('sel'));
-  if(!n){ring.style.display=tip.style.display='none';clearRoute();updateBar();
+  if(!n){ring.style.display=tip.style.display='none';if(navMode!==4)clearRoute();updateBar();renderDetail();
     if(saved){({sc,tx,ty}=saved);saved=null;apply()}return}
   const d=byN[n];
   ring.style.display='block';ring.style.left=d.x+'px';ring.style.top=d.y+'px';
@@ -194,34 +228,51 @@ function select(n,o={}){
   if(o.zoom!==false){const target=Math.max(sc,Math.max(fitScale()*1.3,1.1));sc=Math.min(MAXS,Math.min(target,Math.max(sc,1.1)));tx=wrap.clientWidth/2-d.x*sc;ty=wrap.clientHeight/2-d.y*sc}
   else{ // 화면 밖이면 중앙으로
     const px=d.x*sc+tx,py=d.y*sc+ty;if(px<40||py<40||px>wrap.clientWidth-40||py>wrap.clientHeight-40){tx=wrap.clientWidth/2-d.x*sc;ty=wrap.clientHeight/2-d.y*sc}}
-  apply();updateRoute();updateBar();
+  apply();updateRoute();updateBar();renderDetail();
 }
 const esc=s=>s.replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 
 // ---- 목록
-function render(){
+function render(keep){
+  const L=$('#list'),st=L.scrollTop;
   const terms=norm(q).split(/\s+/).filter(Boolean);
-  const rows=DATA.filter(d=>(hall==='ALL'||(hall==='★'?favs.has(d.n):d.h===hall))&&terms.every(t=>d.key.includes(t)));
-  $('#count').textContent=t('count')(rows.length)+(hall==='★'?t('countFav'):'');
-  $('#list').innerHTML=rows.map(d=>`<div class="item${sel===d.n?' sel':''}" data-n="${d.n}"><span class="num H-${d.h}">${d.n}</span><div class="nm"><b>${esc(nm(d))}</b>${d.s.length?`<small>${esc(d.s.join(' '))}</small>`:''}${d.g?`<small>[${esc(d.g)}]</small>`:''}</div><button class="star${favs.has(d.n)?' on':''}" data-s="${d.n}">★</button></div>`).join('');
-  DATA.forEach(d=>hits[d.n].classList.toggle('fav',favs.has(d.n)));
+  const rows=DATA.filter(d=>(hall==='ALL'||(hall==='★'?favs.has(d.n):hall==='✓'?visited.has(d.n):d.h===hall))&&terms.every(t=>d.key.includes(t)));
+  $('#count').textContent=t('count')(rows.length)+(hall==='★'?t('countFav'):hall==='✓'?t('countVis'):'');
+  L.innerHTML=rows.map(d=>`<div class="item${sel===d.n?' sel':''}${visited.has(d.n)?' vis':''}" data-n="${d.n}"><span class="num H-${d.h}">${d.n}</span><div class="nm"><b>${esc(nm(d))}</b>${memos[d.n]?' <span class="memoi">📝</span>':''}${d.s.length?`<small>${esc(d.s.join(' '))}</small>`:''}${d.g?`<small>[${esc(d.g)}]</small>`:''}</div><button class="chk${visited.has(d.n)?' on':''}" data-c="${d.n}">✓</button><button class="star${favs.has(d.n)?' on':''}" data-s="${d.n}">★</button></div>`).join('');
+  L.scrollTop=keep?st:0;
+  DATA.forEach(d=>{const h=hits[d.n];h.classList.toggle('fav',favs.has(d.n));h.classList.toggle('vis',visited.has(d.n))});
 }
+function toggleFav(n){favs.has(n)?favs.delete(n):favs.add(n);saveFavs();if(navMode===4)replanTour();render(true);renderDetail();updateBar()}
+function toggleVisit(n){
+  visited.has(n)?visited.delete(n):visited.add(n);saveLS('expoVisited',[...visited]);
+  if(navMode===4){if(visited.has(n)&&tourOrder.includes(n))tourStart=n;replanTour()}
+  render(true);renderDetail();updateBar();
+}
+function renderDetail(){
+  const D=$('#detail');
+  if(!sel){D.style.display='none';D.innerHTML='';return}
+  const d=byN[sel];D.style.display='block';
+  D.innerHTML=`<div class="dhead"><span class="num H-${d.h}">${d.n}</span><b>${esc(nm(d))}</b><button class="dbtn fav${favs.has(d.n)?' on':''}" data-d="fav">★</button><button class="dbtn vis${visited.has(d.n)?' on':''}" data-d="vis">${t('visBtn')}</button></div><input id="memo" maxlength="120" placeholder="${t('memoPh')}" value="${esc(memos[d.n]||'')}">`;
+}
+$('#detail').addEventListener('click',e=>{const b=e.target.closest('[data-d]');if(!b||!sel)return;b.dataset.d==='fav'?toggleFav(sel):toggleVisit(sel)});
+$('#detail').addEventListener('input',e=>{if(e.target.id!=='memo'||!sel)return;const v=e.target.value.trim();v?memos[sel]=v:delete memos[sel];saveLS('expoMemos',memos)});
+$('#detail').addEventListener('change',e=>{if(e.target.id==='memo')render(true)});
 $('#list').addEventListener('click',e=>{
-  const s=e.target.closest('[data-s]');
-  if(s){const n=s.dataset.s;favs.has(n)?favs.delete(n):favs.add(n);saveFavs();render();return}
+  const s=e.target.closest('[data-s]');if(s){toggleFav(s.dataset.s);return}
+  const c=e.target.closest('[data-c]');if(c){toggleVisit(c.dataset.c);return}
   const it=e.target.closest('.item');if(it)select(it.dataset.n,{zoom:true});
 });
 $('#q').addEventListener('input',e=>{q=e.target.value;
   if(q.trim()&&hall!=='ALL'){hall='ALL';document.querySelectorAll('.chip').forEach(c=>c.classList.toggle('on',c.dataset.h==='ALL'))}
   render();
   const t=norm(q).trim();if(/^\d{3}$/.test(t)&&byN[t])select(t,{zoom:true})});
-function renderChips(){$('#chips').innerHTML=['ALL',...EVENT.halls.map(h=>h.id),'★'].map(h=>`<button class="chip${h===hall?' on':''}" data-h="${h}">${h==='ALL'?t('all'):h==='★'?t('fav'):t('hall')+h}</button>`).join('')}
+function renderChips(){$('#chips').innerHTML=['ALL',...EVENT.halls.map(h=>h.id),'★','✓'].map(h=>`<button class="chip${h===hall?' on':''}" data-h="${h}">${h==='ALL'?t('all'):h==='★'?t('fav'):h==='✓'?t('vis'):t('hall')+h}</button>`).join('')}
 function applyLang(){
   document.documentElement.lang=lang;
   document.title=(EVENT.title&&EVENT.title[lang])||document.title;
   $('#q').placeholder=t('ph');$('#hint').textContent=t('hint');$('#zr').title=t('zr');$('#cl').title=t('cl');
   $('#langbtn').textContent=t('langBtn');$('#navbtn').textContent=navMode>0?t('navEnd'):t('nav');
-  renderChips();render();updateBar();
+  renderChips();render();updateBar();renderDetail();
 }
 $('#langbtn').onclick=()=>{lang=lang==='ko'?'ja':'ko';try{localStorage.setItem('expoLang',lang)}catch(e){}applyLang()};
 $('#chips').addEventListener('click',e=>{const b=e.target.closest('.chip');if(!b)return;hall=b.dataset.h;document.querySelectorAll('.chip').forEach(c=>c.classList.toggle('on',c===b));render()});
@@ -248,29 +299,33 @@ function nearestWalk(px,py){
   }
   return best;
 }
-// 이진 힙 A*
-function astar(s,t){
-  const N=GW*GH,g=new Float32Array(N).fill(1e9),par=new Int32Array(N).fill(-1),done=new Uint8Array(N);
-  const hx=[],hk=[];
-  const push=(k,v)=>{let i=hk.length;hk.push(k);hx.push(v);while(i>0){const p=(i-1)>>1;if(hk[p]<=hk[i])break;[hk[p],hk[i]]=[hk[i],hk[p]];[hx[p],hx[i]]=[hx[i],hx[p]];i=p}};
-  const pop=()=>{const v=hx[0],lk=hk.pop(),lv=hx.pop();if(hk.length){hk[0]=lk;hx[0]=lv;let i=0;for(;;){let l=2*i+1,r=l+1,m=i;if(l<hk.length&&hk[l]<hk[m])m=l;if(r<hk.length&&hk[r]<hk[m])m=r;if(m===i)break;[hk[m],hk[i]]=[hk[i],hk[m]];[hx[m],hx[i]]=[hx[i],hx[m]];i=m}}return v};
-  const tx_=t%GW,ty_=(t/GW)|0;
-  const h=i=>{const dx=Math.abs((i%GW)-tx_),dy=Math.abs(((i/GW)|0)-ty_);return Math.max(dx,dy)+0.414*Math.min(dx,dy)};
-  g[s]=0;push(h(s),s);
-  while(hk.length){
-    const u=pop();if(done[u])continue;done[u]=1;if(u===t)break;
+class Heap{constructor(){this.k=[];this.v=[]}get size(){return this.k.length}
+  push(key,val){const k=this.k,v=this.v;let i=k.length;k.push(key);v.push(val);while(i>0){const p=(i-1)>>1;if(k[p]<=k[i])break;[k[p],k[i]]=[k[i],k[p]];[v[p],v[i]]=[v[i],v[p]];i=p}}
+  pop(){const k=this.k,v=this.v,top=v[0],lk=k.pop(),lv=v.pop();if(k.length){k[0]=lk;v[0]=lv;let i=0;for(;;){const l=2*i+1,r=l+1;let m=i;if(l<k.length&&k[l]<k[m])m=l;if(r<k.length&&k[r]<k[m])m=r;if(m===i)break;[k[m],k[i]]=[k[i],k[m]];[v[m],v[i]]=[v[i],v[m]];i=m}}return top}}
+// t 지정: A*(한 목적지). targets(Set) 지정: 다익스트라(여러 목적지 거리를 한 번에)
+function search(s,t,targets){
+  const N=GW*GH,g=new Float32Array(N).fill(1e9),par=new Int32Array(N).fill(-1),done=new Uint8Array(N),H=new Heap();
+  const remain=targets?new Set(targets):null;
+  const tx_=t==null?0:t%GW,ty_=t==null?0:(t/GW)|0;
+  const h=t==null?()=>0:i=>{const dx=Math.abs((i%GW)-tx_),dy=Math.abs(((i/GW)|0)-ty_);return Math.max(dx,dy)+0.414*Math.min(dx,dy)};
+  g[s]=0;H.push(h(s),s);
+  while(H.size){
+    const u=H.pop();if(done[u])continue;done[u]=1;
+    if(t!=null&&u===t)break;
+    if(remain){remain.delete(u);if(!remain.size)break}
     const ux=u%GW,uy=(u/GW)|0;
     for(let dy=-1;dy<=1;dy++)for(let dx=-1;dx<=1;dx++){
       if(!dx&&!dy)continue;const x=ux+dx,y=uy+dy;if(x<0||y<0||x>=GW||y>=GH)continue;
       const v=y*GW+x;if(!grid[v]||done[v])continue;
       if(dx&&dy&&(!grid[uy*GW+x]||!grid[y*GW+ux]))continue; // 모서리 파고들기 금지
       const w=(dx&&dy?1.414:1)*(1+0.8*Math.max(0,4-dist[v]));
-      const ng=g[u]+w;if(ng<g[v]){g[v]=ng;par[v]=u;push(ng+h(v),v)}
+      const ng=g[u]+w;if(ng<g[v]){g[v]=ng;par[v]=u;H.push(ng+h(v),v)}
     }
   }
-  if(g[t]>=1e9)return null;
-  const path=[];for(let i=t;i!==-1;i=par[i])path.push(i);return path.reverse();
+  return {g,par};
 }
+const pathTo=(par,t)=>{const p=[];for(let i=t;i!==-1;i=par[i])p.push(i);return p.reverse()};
+function astar(s,t){const r=search(s,t);return r.g[t]>=1e9?null:pathTo(r.par,t)}
 function los(a,b){
   const ax=a%GW,ay=(a/GW)|0,bx=b%GW,by=(b/GW)|0,n=Math.max(Math.abs(bx-ax),Math.abs(by-ay));
   for(let i=1;i<n;i++){const x=Math.round(ax+(bx-ax)*i/n),y=Math.round(ay+(by-ay)*i/n);if(dist[y*GW+x]<2)return false}
@@ -282,15 +337,16 @@ function smooth(p){
   return out;
 }
 
-// navMode: 0=꺼짐, 1=출발지 선택 대기, 2=도착지 선택 대기, 3=경로 표시 중
+// navMode: 0=꺼짐, 1=출발지 선택 대기, 2=도착지 선택 대기, 3=경로 표시 중, 4=즐겨찾기 순회
 let me=null,navMode=0;
-function setNav(m){navMode=m;if(m<2)me=null;if(m===0||m===1){clearRoute()}updateMe();updateBar();
+function setNav(m){navMode=m;if(m<2)me=null;if(m===0||m===1){clearRoute()}if(m!==4)clearTour();updateMe();updateBar();
   $('#navbtn').classList.toggle('on',m>0);$('#navbtn').textContent=m>0?t('navEnd'):t('nav')}
 $('#navbtn').onclick=()=>{if(navMode){setNav(0)}else{const keep=sel;setNav(1);if(keep)select(null);}};
 function updateMe(){const m=$('#me');if(!me){m.style.display='none';return}const d=byN[me];m.style.display='block';m.style.left=d.x+'px';m.style.top=d.y+'px'}
 function clearRoute(){$('#rl0').setAttribute('points','');$('#rl1').setAttribute('points','');routeState=''}
 let routeState='';
 function updateRoute(){
+  if(navMode===4)return;
   clearRoute();
   if(navMode!==3||!me||!sel||me===sel)return;
   const a=byN[me],b=byN[sel],s=nearestWalk(a.x,a.y),t=nearestWalk(b.x,b.y);
@@ -313,15 +369,76 @@ function updateBar(){
   const end=navMode===3?sel:null;
   const slot=(kind,n,active)=>{const d=n&&byN[n];
     return `<button class="slot${active?' act':''}" data-a="${kind}"><small>${t(kind==='s'?'start':'end')}</small>${d?`<b>${d.n}</b><span>${esc(nm(d))}</span>`:`<span class="ph">${active?t('pick'):'-'}</span>`}</button>`};
+  if(navMode===4){
+    const doneN=[...favs].filter(id=>visited.has(id)).length;
+    let h=`<div class="ntitle">${t('tourTitle')(tourOrder.length)}</div><div class="nslots">${slot('s',tourStart,false)}</div>`;
+    if(!tourOrder.length)h+=`<div class="nhelp">${t('tourAllDone')}</div>`;
+    else h+=`<div class="tlist">`+tourOrder.map((id,i)=>`<div class="tstop" data-stop="${id}"><span class="tn">${i+1}</span><span class="tt"><b>${id}</b> ${esc(nm(byN[id]))}</span><button class="chk" data-vis="${id}">✓</button></div>`).join('')+`</div>`;
+    if(tourSkipped.length)h+=`<div class="nhelp">${t('tourSkip')}${tourSkipped.join(', ')}</div>`;
+    if(doneN)h+=`<div class="nhelp">${t('tourDone')(doneN)}</div>`;
+    h+=`<div class="nhelp">${t('tourHelp')}</div><button class="nbtn ghost" data-a="back">${t('tourBack')}</button>`;
+    p.innerHTML=h;return;
+  }
   const title=navMode===1?t('t1'):navMode===2?t('t2'):(routeState==='ok'?t('t3'):t('tfail'));
+  const cand=[...favs].filter(id=>id!==me&&!visited.has(id)&&byN[id]).length;
   p.innerHTML=`<div class="ntitle">${title}</div><div class="nslots">${slot('s',me,navMode===1)}<span class="arr">→</span>${slot('e',end,navMode===2)}</div>`
-    +`<div class="nhelp">${navMode<3?t('h12'):t('h3')}</div>`;
+    +`<div class="nhelp">${navMode<3?t('h12'):t('h3')}</div>`
+    +(navMode>=2&&cand?`<button class="nbtn ghost" data-a="tour">${t('tourBtn')(cand)}</button>`:'');
 }
-$('#navpanel').addEventListener('click',e=>{const b=e.target.closest('[data-a]');if(!b)return;
-  if(b.dataset.a==='s'){setNav(1);select(null)}
-  else if(navMode===3)select(null)});
+$('#navpanel').addEventListener('click',e=>{
+  const v=e.target.closest('[data-vis]');if(v){toggleVisit(v.dataset.vis);return}
+  const st=e.target.closest('[data-stop]');if(st){select(st.dataset.stop,{zoom:true});return}
+  const b=e.target.closest('[data-a]');if(!b)return;const a=b.dataset.a;
+  if(a==='tour')startTour();
+  else if(a==='back'){clearTour();clearRoute();navMode=2;updateBar();select(null)}
+  else if(a==='s'){setNav(1);select(null)}
+  else if(a==='e'&&navMode===3)select(null);
+});
+
+// ---- 즐겨찾기 순회 동선 (가장 가까운 곳부터 + 2-opt 로 다듬기)
+let tourStart=null,tourOrder=[],tourSkipped=[];
+function clearTour(){tourOrder=[];tourSkipped=[];$('#stops').innerHTML=''}
+function startTour(){tourStart=me;navMode=4;select(null);planTour();updateBar();$('#navbtn').classList.add('on');$('#navbtn').textContent=t('navEnd')}
+function replanTour(){planTour();updateBar()}
+function fitPts(pts,maxS){
+  const xs=pts.map(p=>p[0]),ys=pts.map(p=>p[1]),pad=90;
+  const x0=Math.min(...xs)-pad,x1=Math.max(...xs)+pad,y0=Math.min(...ys)-pad,y1=Math.max(...ys)+pad;
+  sc=Math.min(maxS,wrap.clientWidth/(x1-x0),wrap.clientHeight/(y1-y0));
+  tx=wrap.clientWidth/2-(x0+x1)/2*sc;ty=wrap.clientHeight/2-(y0+y1)/2*sc;apply();
+}
+function planTour(){
+  clearRoute();clearTour();me=tourStart;updateMe();
+  const ids=[...favs].filter(id=>id!==tourStart&&!visited.has(id)&&byN[id]).slice(0,30);
+  if(!ids.length)return;
+  const nodes=[tourStart,...ids],cells=nodes.map(id=>nearestWalk(byN[id].x,byN[id].y)),n=nodes.length;
+  const D=nodes.map(()=>new Float64Array(n).fill(1e9));
+  for(let i=0;i<n;i++){
+    const r=search(cells[i],null,new Set(cells.filter((_,j)=>j!==i)));
+    for(let j=0;j<n;j++)if(j!==i)D[i][j]=r.g[cells[j]];
+  }
+  const ok=[];for(let j=1;j<n;j++){if(D[0][j]<1e9)ok.push(j);else tourSkipped.push(nodes[j])}
+  const order=[0],left=new Set(ok);let cur=0;
+  while(left.size){let b=-1,bd=Infinity;for(const j of left)if(D[cur][j]<bd){bd=D[cur][j];b=j}order.push(b);left.delete(b);cur=b}
+  for(let guard=0,imp=true;imp&&guard<50;guard++){imp=false;
+    for(let i=1;i<order.length-1;i++)for(let k=i+1;k<order.length;k++){
+      const a=order[i-1],b=order[i],c=order[k],d=k+1<order.length?order[k+1]:null;
+      const delta=D[a][c]+(d!=null?D[b][d]:0)-D[a][b]-(d!=null?D[c][d]:0);
+      if(delta<-1e-6){order.splice(i,k-i+1,...order.slice(i,k+1).reverse());imp=true}
+    }}
+  tourOrder=order.slice(1).map(j=>nodes[j]);
+  const pts=[[byN[tourStart].x,byN[tourStart].y]];let prev=cells[0];
+  for(let idx=1;idx<order.length;idx++){
+    const j=order[idx],raw=astar(prev,cells[j]),sm=raw?smooth(raw):[prev,cells[j]];
+    pts.push(...sm.map(i=>[(i%GW)*CS+CS/2,((i/GW)|0)*CS+CS/2]),[byN[nodes[j]].x,byN[nodes[j]].y]);prev=cells[j];
+  }
+  const str=pts.map(p=>p.join(',')).join(' ');
+  $('#rl0').setAttribute('points',str);$('#rl1').setAttribute('points',str);routeState='ok';
+  $('#stops').innerHTML=tourOrder.map((id,i)=>`<div class="stopn" style="left:${byN[id].x}px;top:${byN[id].y}px">${i+1}</div>`).join('');
+  fitPts(pts,1.1);
+}
 updateMe();
 reset();applyLang();
+if('serviceWorker' in navigator&&/^https?:$/.test(location.protocol))navigator.serviceWorker.register('sw.js').catch(()=>{});
 </script>
 </body>
 </html>
