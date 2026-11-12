@@ -1,5 +1,5 @@
 // 자동 생성 파일 (tools/build.py)
-const V = 'expo-4f69dc8d0f';
+const V = 'expo-8b8027d6d3';
 const FILES = ['./', './index.html', './manifest.webmanifest', './icon-192.png', './icon-512.png', './apple-touch-icon.png'];
 self.addEventListener('install', e => e.waitUntil(
   caches.open(V).then(c => c.addAll(FILES.map(f => new Request(f, {cache: 'reload'})))).then(() => self.skipWaiting())));
