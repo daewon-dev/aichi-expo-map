@@ -103,6 +103,7 @@ html,body{margin:0;height:100%;background:var(--bg);color:var(--txt);font:14px/1
  #side{border-right:0}
  #hint{display:none}
 }
+.nores{padding:18px 14px;text-align:center;color:#666;font-size:14px;line-height:1.9}.nores a,.webl{color:#1971ff;text-decoration:none;font-weight:600}.webl{display:inline-block;margin-top:8px;font-size:13px}
 </style>
 </head>
 <body>
@@ -136,7 +137,7 @@ ko:{title:'',ph:'부스 번호 또는 업체명 (예: 321, UNIFLAME)',nav:'🧭 
   noname:'(업체명 없음)',guess:'(번호 누락 — 인접 목록으로 추정)',langBtn:'日本語',
   vis:'✓ 방문',countVis:' (방문)',visBtn:'✓ 방문함',memoPh:'메모 (예: 의자 살 것)',
   tourBtn:n=>`★ 즐겨찾기 ${n}곳 순회`,tourTitle:n=>`★ 순회 경로 · ${n}곳`,tourDone:n=>`✓ 방문 완료 ${n}곳`,
-  tourAllDone:'남은 즐겨찾기를 모두 방문했어요 🎉',tourSkip:'갈 수 없어 제외: ',tourHelp:'✓를 누르면 방문 처리하고, 그 부스에서부터 다시 계산해요',tourBack:'← 도착지 선택으로'},
+  tourAllDone:'남은 즐겨찾기를 모두 방문했어요 🎉',tourSkip:'갈 수 없어 제외: ',tourHelp:'✓를 누르면 방문 처리하고, 그 부스에서부터 다시 계산해요',tourBack:'← 도착지 선택으로',web:'🔎 웹에서 검색',noRes:'검색 결과가 없어요',fuzzy:'비슷한 결과 (오타 허용)',webQ:'웹에서 검색: '},
 ja:{title:'',ph:'ブース番号または出展者名（例：321、UNIFLAME）',nav:'🧭 ルート案内',navEnd:'✕ ルート案内を終了',all:'すべて',hall:'ホール ',fav:'★ お気に入り',
   count:n=>`${n}ブース`,countFav:'（お気に入り）',hint:'ドラッグ：移動 ・ ホイール/ピンチ：拡大 ・ 番号をタップ：出展者を確認',zr:'全体表示',cl:'選択解除（Esc）',
   start:'出発',end:'到着',pick:'選んでください',t1:'① 出発地を選んでください',t2:'② 目的地を選んでください',t3:'🧭 ルート表示中',tfail:'ルートが見つかりませんでした',
@@ -144,7 +145,7 @@ ja:{title:'',ph:'ブース番号または出展者名（例：321、UNIFLAME）'
   noname:'（出展者名なし）',guess:'（番号欠落のため隣接リストから推定）',langBtn:'한국어',
   vis:'✓ 訪問済み',countVis:'（訪問済み）',visBtn:'✓ 訪問済み',memoPh:'メモ（例：椅子を買う）',
   tourBtn:n=>`★ お気に入り${n}件を巡回`,tourTitle:n=>`★ 巡回ルート ・ ${n}件`,tourDone:n=>`✓ 訪問済み ${n}件`,
-  tourAllDone:'お気に入りをすべて回りました 🎉',tourSkip:'行けないため除外：',tourHelp:'✓を押すと訪問済みにして、そのブースから再計算します',tourBack:'← 目的地選択に戻る'}
+  tourAllDone:'お気に入りをすべて回りました 🎉',tourSkip:'行けないため除外：',tourHelp:'✓を押すと訪問済みにして、そのブースから再計算します',tourBack:'← 目的地選択に戻る',web:'🔎 ウェブで検索',noRes:'該当するブースがありません',fuzzy:'近い結果（表記ゆれを許容）',webQ:'ウェブで検索：'}
 };
 let lang=(navigator.language||'').toLowerCase().startsWith('ja')?'ja':'ko';
 try{const v=localStorage.getItem('expoLang');if(v==='ko'||v==='ja')lang=v}catch(e){}
@@ -159,8 +160,13 @@ const saveLS=(k,v)=>{try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}};
 let hall='ALL',sel=null,q='';
 
 // ---- 정규화 (전각→반각, 소문자)
-const norm=s=>s.normalize('NFKC').toLowerCase();
-DATA.forEach(d=>d.key=norm(d.n+' '+d.t+' '+d.s.join(' ')+' '+d.g));
+const norm=s=>s.normalize('NFKC').toLowerCase().replace(/[\u30a1-\u30f6]/g,c=>String.fromCharCode(c.charCodeAt(0)-0x60)); // 전각→반각, 소문자, 가타카나→히라가나
+const compact=s=>norm(s).replace(/[\s\-_.·・,/&'’"()（）]+/g,''); // 띄어쓰기·기호 무시
+DATA.forEach(d=>{d.key=norm(d.n+' '+d.t+' '+d.s.join(' ')+' '+d.g);d.ck=compact(d.n+d.t+d.s.join('')+d.g);d.tk=compact(d.t)});
+// 오타 허용: 검색어와 편집거리 1 이하로 닮은 부분 문자열이 있는가 (Sellers)
+function approx(p,txt){const m=p.length;if(m<4)return false;let prev=Array.from({length:m+1},(_,i)=>i);
+  for(const ch of txt){const cur=[0];for(let i=1;i<=m;i++)cur[i]=Math.min(prev[i]+1,cur[i-1]+1,prev[i-1]+(p[i-1]===ch?0:1));if(cur[m]<=1)return true;prev=cur}return false}
+const webUrl=d=>'https://www.google.com/search?q='+encodeURIComponent(d.t||'');
 
 // ---- 지도 pan/zoom
 const wrap=$('#mapwrap'),stage=$('#stage');
@@ -235,10 +241,15 @@ const esc=s=>s.replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&qu
 // ---- 목록
 function render(keep){
   const L=$('#list'),st=L.scrollTop;
-  const terms=norm(q).split(/\s+/).filter(Boolean);
-  const rows=DATA.filter(d=>(hall==='ALL'||(hall==='★'?favs.has(d.n):hall==='✓'?visited.has(d.n):d.h===hall))&&terms.every(t=>d.key.includes(t)));
-  $('#count').textContent=t('count')(rows.length)+(hall==='★'?t('countFav'):hall==='✓'?t('countVis'):'');
-  L.innerHTML=rows.map(d=>`<div class="item${sel===d.n?' sel':''}${visited.has(d.n)?' vis':''}" data-n="${d.n}"><span class="num H-${d.h}">${d.n}</span><div class="nm"><b>${esc(nm(d))}</b>${memos[d.n]?' <span class="memoi">📝</span>':''}${d.s.length?`<small>${esc(d.s.join(' '))}</small>`:''}${d.g?`<small>[${esc(d.g)}]</small>`:''}</div><button class="chk${visited.has(d.n)?' on':''}" data-c="${d.n}">✓</button><button class="star${favs.has(d.n)?' on':''}" data-s="${d.n}">★</button></div>`).join('');
+  const terms=norm(q).split(/\s+/).filter(Boolean),cq=compact(q);
+  const inHall=d=>hall==='ALL'||(hall==='★'?favs.has(d.n):hall==='✓'?visited.has(d.n):d.h===hall);
+  const hit=(d,tm)=>d.key.includes(tm)||d.ck.includes(compact(tm));
+  let rows=DATA.filter(d=>inHall(d)&&terms.every(tm=>hit(d,tm))),fuzzy=false;
+  if(terms.length&&!rows.length&&cq.length>=4){rows=DATA.filter(d=>inHall(d)&&approx(cq,d.ck));fuzzy=rows.length>0}
+  if(terms.length)rows.sort((a,b)=>(b.tk.includes(cq)-a.tk.includes(cq))); // 업체명에 걸린 것 먼저 (정렬은 안정적)
+  $('#count').textContent=t('count')(rows.length)+(hall==='★'?t('countFav'):hall==='✓'?t('countVis'):'')+(fuzzy?' · '+t('fuzzy'):'');
+  const none=!rows.length&&q.trim()?`<div class="nores">${t('noRes')}<br><a href="https://www.google.com/search?q=${encodeURIComponent(q.trim())}" target="_blank" rel="noopener">${t('webQ')}“${esc(q.trim())}”</a></div>`:'';
+  L.innerHTML=none+rows.map(d=>`<div class="item${sel===d.n?' sel':''}${visited.has(d.n)?' vis':''}" data-n="${d.n}"><span class="num H-${d.h}">${d.n}</span><div class="nm"><b>${esc(nm(d))}</b>${memos[d.n]?' <span class="memoi">📝</span>':''}${d.s.length?`<small>${esc(d.s.join(' '))}</small>`:''}${d.g?`<small>[${esc(d.g)}]</small>`:''}</div><button class="chk${visited.has(d.n)?' on':''}" data-c="${d.n}">✓</button><button class="star${favs.has(d.n)?' on':''}" data-s="${d.n}">★</button></div>`).join('');
   L.scrollTop=keep?st:0;
   DATA.forEach(d=>{const h=hits[d.n];h.classList.toggle('fav',favs.has(d.n));h.classList.toggle('vis',visited.has(d.n))});
 }
@@ -252,7 +263,7 @@ function renderDetail(){
   const D=$('#detail');
   if(!sel){D.style.display='none';D.innerHTML='';return}
   const d=byN[sel];D.style.display='block';
-  D.innerHTML=`<div class="dhead"><span class="num H-${d.h}">${d.n}</span><b>${esc(nm(d))}</b><button class="dbtn fav${favs.has(d.n)?' on':''}" data-d="fav">★</button><button class="dbtn vis${visited.has(d.n)?' on':''}" data-d="vis">${t('visBtn')}</button></div><input id="memo" maxlength="120" placeholder="${t('memoPh')}" value="${esc(memos[d.n]||'')}">`;
+  D.innerHTML=`<div class="dhead"><span class="num H-${d.h}">${d.n}</span><b>${esc(nm(d))}</b><button class="dbtn fav${favs.has(d.n)?' on':''}" data-d="fav">★</button><button class="dbtn vis${visited.has(d.n)?' on':''}" data-d="vis">${t('visBtn')}</button></div><input id="memo" maxlength="120" placeholder="${t('memoPh')}" value="${esc(memos[d.n]||'')}">${d.t?`<a class="webl" href="${webUrl(d)}" target="_blank" rel="noopener">${t('web')}</a>`:''}`;
 }
 $('#detail').addEventListener('click',e=>{const b=e.target.closest('[data-d]');if(!b||!sel)return;b.dataset.d==='fav'?toggleFav(sel):toggleVisit(sel)});
 $('#detail').addEventListener('input',e=>{if(e.target.id!=='memo'||!sel)return;const v=e.target.value.trim();v?memos[sel]=v:delete memos[sel];saveLS('expoMemos',memos)});
