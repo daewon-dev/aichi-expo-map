@@ -115,7 +115,7 @@ html,body{margin:0;height:100%;background:var(--bg);color:var(--txt);font:14px/1
  #side{border-right:0}
  #hint{display:none}
  .edit #app{grid-template-rows:13dvh 1fr}.edit #top,.edit #list{display:none}.edit #detail{max-height:none;flex:1}
- .navm #chips,.navm #meta,.navm #memo,.navm .webl{display:none}
+ .navm #chips,.navm #meta{display:none}
 }
 .mb{display:flex;gap:6px}
 #logmodal{display:none;position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:40;align-items:flex-end;justify-content:center}#logmodal.on{display:flex}
@@ -134,7 +134,7 @@ html,body{margin:0;height:100%;background:var(--bg);color:var(--txt);font:14px/1
 .sadd{display:flex;gap:6px;margin-top:4px}.sadd input{min-width:0;padding:7px 9px;border:1px solid var(--line);border-radius:3px;font-size:16px;background:var(--bg);color:var(--txt)}.sadd #sl{flex:1}.sadd #sa{width:92px}
 .pstrip{display:flex;gap:6px;flex-wrap:wrap}.pstrip img{width:56px;height:56px;object-fit:cover;border-radius:3px;border:1px solid var(--line);cursor:pointer}
 .pbtn{display:flex;align-items:center;justify-content:center;width:56px;height:56px;border:1.5px dashed #1971ff;border-radius:3px;font-size:22px;cursor:pointer;color:#1971ff}
-.yen{font-size:11px;color:#1971ff;font-weight:700}.navm .dx{display:none}
+.yen{font-size:11px;color:#1971ff;font-weight:700}.navm .dx,.navm .dsum,.navm [data-d="edit"]{display:none}.dhead{position:sticky;top:0;z-index:1;background:var(--panel)}.dsum{display:flex;gap:10px;align-items:center;justify-content:space-between;margin-top:6px;font-size:13px;color:var(--sub)}.dsum .webl{margin:0;flex:none}.dsum span{flex:1;min-width:0;text-align:right;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;cursor:pointer}.dbtn.edt.on{background:#1971ff;border-color:#1971ff;color:#fff}
 #addmodal{display:none;position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:50;align-items:center;justify-content:center;padding:16px}#addmodal.on{display:flex}
 .abox{background:var(--panel);color:var(--txt);border-radius:3px;padding:16px;max-width:380px;width:100%;max-height:90dvh;overflow:auto}.abox h3{margin:0 0 4px;font-size:17px}.abox h4{margin:14px 0 4px;font-size:14px;color:#1971ff}.abox ol{margin:0;padding-left:20px;line-height:1.75}.abox .an{color:var(--sub);font-size:12px;margin-top:12px}
 #addx{margin-top:14px;width:100%;min-height:44px;border:1px solid #1971ff;background:#1971ff;color:#fff;border-radius:3px;font-size:15px;cursor:pointer}.nores{padding:18px 14px;text-align:center;color:var(--sub);font-size:14px;line-height:1.9}.nores a,.webl{color:#1971ff;text-decoration:none;font-weight:600}.webl{display:inline-block;margin-top:8px;font-size:13px}
@@ -175,7 +175,7 @@ ko:{title:'',ph:'번호·업체명 검색 (예: 321)',nav:'🧭 길찾기',navEn
   noname:'(업체명 없음)',guess:'(번호 누락 — 인접 목록으로 추정)',langBtn:'日本語',
   vis:'✓ 방문',countVis:' (방문)',visBtn:'✓ 방문함',memoPh:'메모 (예: 의자 살 것)',
   tourBtn:n=>`★ 즐겨찾기 ${n}곳 순회`,tourTitle:n=>`★ 순회 경로 · ${n}곳`,tourDone:n=>`✓ 방문 완료 ${n}곳`,
-  tourAllDone:'남은 즐겨찾기를 모두 방문했어요 🎉',tourSkip:'갈 수 없어 제외: ',tourHelp:'✓를 누르면 방문 처리하고, 그 부스에서부터 다시 계산해요',tourBack:'← 도착지 선택으로',web:'🔎 웹에서 검색',toDark:'🌙 다크',toLight:'☀ 라이트',addBtn:'📲 앱 설치',photoWarn:'⚠ 앱을 지우거나 사이트 데이터를 삭제하면 사진도 사라져요. 중요한 사진은 기기에 따로 저장해 두세요.',pq:'화질',q1:'표준',q2:'고화질',q3:'원본',qNote:'원본은 사진 한 장에 3~8MB를 써요',spend:'💴 구매 기록',spendPh:'품목 (예: 의자)',amtPh:'금액(¥)',addB:'추가',photos:'📷 기념 사진',
+  tourAllDone:'남은 즐겨찾기를 모두 방문했어요 🎉',tourSkip:'갈 수 없어 제외: ',tourHelp:'✓를 누르면 방문 처리하고, 그 부스에서부터 다시 계산해요',tourBack:'← 도착지 선택으로',web:'🔎 웹에서 검색',toDark:'🌙 다크',toLight:'☀ 라이트',addBtn:'📲 앱 설치',editT:'메모·구매·사진',photoWarn:'⚠ 앱을 지우거나 사이트 데이터를 삭제하면 사진도 사라져요. 중요한 사진은 기기에 따로 저장해 두세요.',pq:'화질',q1:'표준',q2:'고화질',q3:'원본',qNote:'원본은 사진 한 장에 3~8MB를 써요',spend:'💴 구매 기록',spendPh:'품목 (예: 의자)',amtPh:'금액(¥)',addB:'추가',photos:'📷 기념 사진',
   photoMax:'사진은 부스당 10장까지 저장할 수 있어요',noStore:'이 브라우저에서는 사진을 저장할 수 없어요',logBtn:'📒 기록',logTitle:'내 방문 기록',totalL:'합계',rateL:'100엔당',wonU:'원',
   noLog:'아직 기록이 없어요. 부스를 선택해서 ✓·메모·구매·사진을 남겨 보세요.',copyT:'📋 텍스트 복사',copied:'복사했어요',sharePh:'📤 사진 공유',shareOne:'📤 공유·저장',delB:'🗑 삭제',
   delAsk:'이 사진을 삭제할까요?',noShare:'이 기기에서는 공유를 지원하지 않아요. 사진을 길게 눌러 저장하세요.',memoL:'메모',
@@ -190,7 +190,7 @@ ja:{title:'',ph:'番号・出展者名（例：321）',nav:'🧭 ルート案内
   noname:'（出展者名なし）',guess:'（番号欠落のため隣接リストから推定）',langBtn:'한국어',
   vis:'✓ 訪問済み',countVis:'（訪問済み）',visBtn:'✓ 訪問済み',memoPh:'メモ（例：椅子を買う）',
   tourBtn:n=>`★ お気に入り${n}件を巡回`,tourTitle:n=>`★ 巡回ルート ・ ${n}件`,tourDone:n=>`✓ 訪問済み ${n}件`,
-  tourAllDone:'お気に入りをすべて回りました 🎉',tourSkip:'行けないため除外：',tourHelp:'✓を押すと訪問済みにして、そのブースから再計算します',tourBack:'← 目的地選択に戻る',web:'🔎 ウェブで検索',toDark:'🌙 ダーク',toLight:'☀ ライト',addBtn:'📲 ホームに追加',photoWarn:'⚠ アプリやサイトデータを削除すると写真も消えます。大切な写真は端末に別途保存してください。',pq:'画質',q1:'標準',q2:'高画質',q3:'オリジナル',qNote:'オリジナルは1枚あたり3〜8MBを使います',spend:'💴 購入記録',spendPh:'品名（例：椅子）',amtPh:'金額（¥）',addB:'追加',photos:'📷 記念写真',
+  tourAllDone:'お気に入りをすべて回りました 🎉',tourSkip:'行けないため除外：',tourHelp:'✓を押すと訪問済みにして、そのブースから再計算します',tourBack:'← 目的地選択に戻る',web:'🔎 ウェブで検索',toDark:'🌙 ダーク',toLight:'☀ ライト',addBtn:'📲 ホームに追加',editT:'メモ・購入・写真',photoWarn:'⚠ アプリやサイトデータを削除すると写真も消えます。大切な写真は端末に別途保存してください。',pq:'画質',q1:'標準',q2:'高画質',q3:'オリジナル',qNote:'オリジナルは1枚あたり3〜8MBを使います',spend:'💴 購入記録',spendPh:'品名（例：椅子）',amtPh:'金額（¥）',addB:'追加',photos:'📷 記念写真',
   photoMax:'写真は1ブースにつき10枚まで保存できます',noStore:'このブラウザでは写真を保存できません',logBtn:'📒 記録',logTitle:'訪問記録',totalL:'合計',rateL:'100円あたり',wonU:'ウォン',
   noLog:'まだ記録がありません。ブースを選んで、✓・メモ・購入・写真を残しましょう。',copyT:'📋 テキストをコピー',copied:'コピーしました',sharePh:'📤 写真を共有',shareOne:'📤 共有・保存',delB:'🗑 削除',
   delAsk:'この写真を削除しますか？',noShare:'この端末では共有に対応していません。写真を長押しして保存してください。',memoL:'メモ',
@@ -371,11 +371,15 @@ async function delPhoto(n,id){
 }
 function extraHtml(d){
   const sp=spend[d.n]||[],ph=photos[d.n]||[];
-  const head=`<button class="dxt" data-dx>💴 ${yen(spentOf(d.n))}${won(spentOf(d.n))} · 📷 ${ph.length}/${MAXP} <span class="ar"></span></button>`;
-  return `<div class="dx${dxOpen?' open':''}">${head}<div class="dxbody"><div class="dsec">${t('spend')}${sp.length?`<span class="dtot">${yen(spentOf(d.n))}${won(spentOf(d.n))}</span>`:''}</div>`
+  const head=`<input id="memo" maxlength="120" placeholder="${t('memoPh')}" value="${esc(memos[d.n]||'')}">${d.t?`<a class="webl" href="${webUrl(d)}" target="_blank" rel="noopener">${t('web')}</a>`:''}`;
+  return `<div class="dx open">${head}<div class="dxbody"><div class="dsec">${t('spend')}${sp.length?`<span class="dtot">${yen(spentOf(d.n))}${won(spentOf(d.n))}</span>`:''}</div>`
    +sp.map((x,i)=>`<div class="srow"><span>${esc(x.l||'—')}</span><b>${yen(x.a)}</b><button class="dbtn" data-sx="${i}">✕</button></div>`).join('')
    +`<div class="sadd"><input id="sl" maxlength="30" placeholder="${t('spendPh')}"><input id="sa" type="number" inputmode="numeric" min="0" placeholder="${t('amtPh')}"><button class="dbtn" data-sadd>${t('addB')}</button></div>`
    +`<div class="dsec">${t('photos')} ${ph.length}/${MAXP}<select id="pq">${[['std','q1'],['hi','q2'],['orig','q3']].map(([v,k])=>`<option value="${v}"${pq===v?' selected':''}>${t('pq')}: ${t(k)}</option>`).join('')}</select></div>${pq==='orig'?`<div class="lnote" style="padding:0 0 6px">${t('qNote')}</div>`:''}<div class="pstrip">${ph.map((p,i)=>`<img src="${p.url}" data-pi="${i}" alt="">`).join('')}<label class="pbtn">📷<input id="pfile" type="file" accept="image/*" hidden></label></div><div class="lnote" style="padding:8px 0 0">${t('photoWarn')}</div><button class="nbtn ghost dxdone" data-dx>▴ ${t('close')}</button></div></div>`;
+}
+function sumHtml(d){
+  const parts=[memos[d.n]?`📝 ${esc(memos[d.n])}`:'',spentOf(d.n)?`💴 ${yen(spentOf(d.n))}`:'',(photos[d.n]||[]).length?`📷 ${photos[d.n].length}`:''].filter(Boolean);
+  return `<div class="dsum">${d.t?`<a class="webl" href="${webUrl(d)}" target="_blank" rel="noopener">${t('web')}</a>`:''}${parts.length?`<span data-d="edit">${parts.join(' · ')}</span>`:''}</div>`;
 }
 function addSpend(){
   if(!sel)return;const a=Math.round(+$('#sa').value);if(!(a>0))return;
@@ -430,19 +434,17 @@ $('#logcopy').onclick=async()=>{const tx=logText();try{await navigator.clipboard
 $('#logshare').onclick=()=>{const files=[];Object.keys(photos).sort().forEach(n=>photos[n].forEach((p,i)=>files.push(fileOf(p,`${n}_${i+1}`))));if(!files.length){toast(t('noLog'));return}shareFiles(files)};
 // 구매·사진·메모 편집 영역을 열면 지도를 줄이고 목록·검색을 숨겨 카드가 넓어짐 (폰 화면). DOM을 다시 그리지 않아 입력 중에도 안전.
 function setDx(open){
-  dxOpen=open;const x=$('#detail .dx');if(x)x.classList.toggle('open',open);
-  document.body.classList.toggle('edit',open&&!!sel);
+  dxOpen=open;renderDetail();
   requestAnimationFrame(()=>{if(sel){const d=byN[sel];tx=wrap.clientWidth/2-d.x*sc;ty=wrap.clientHeight/2-d.y*sc;apply()}else apply()});
 }
-$('#detail').addEventListener('focusin',e=>{if(e.target.id==='memo'&&!dxOpen)setDx(true)});
 function renderDetail(){
   const D=$('#detail');
-  document.body.classList.toggle('edit',!!sel&&dxOpen);
+  document.body.classList.toggle('edit',!!sel&&dxOpen&&!navMode);
   if(!sel){D.style.display='none';D.innerHTML='';return}
   const d=byN[sel];D.style.display='block';
-  D.innerHTML=`<div class="dhead"><span class="num H-${d.h}">${d.n}</span><b>${esc(nm(d))}</b><button class="dbtn fav${favs.has(d.n)?' on':''}" data-d="fav">★</button><button class="dbtn vis${visited.has(d.n)?' on':''}" data-d="vis" title="${t('visBtn')}" aria-label="${t('visBtn')}">✓</button><button class="dbtn" data-d="x" title="${t('cl')}">✕</button></div><input id="memo" maxlength="120" placeholder="${t('memoPh')}" value="${esc(memos[d.n]||'')}">${d.t?`<a class="webl" href="${webUrl(d)}" target="_blank" rel="noopener">${t('web')}</a>`:''}${extraHtml(d)}`;
+  D.innerHTML=`<div class="dhead"><span class="num H-${d.h}">${d.n}</span><b>${esc(nm(d))}</b><button class="dbtn fav${favs.has(d.n)?' on':''}" data-d="fav">★</button><button class="dbtn edt${dxOpen?' on':''}" data-d="edit" title="${t('editT')}" aria-label="${t('editT')}">📝</button><button class="dbtn vis${visited.has(d.n)?' on':''}" data-d="vis" title="${t('visBtn')}" aria-label="${t('visBtn')}">✓</button><button class="dbtn" data-d="x" title="${t('cl')}">✕</button></div>${dxOpen?extraHtml(d):sumHtml(d)}`;
 }
-$('#detail').addEventListener('click',e=>{const b=e.target.closest('[data-d]');if(!b||!sel)return;b.dataset.d==='x'?select(null):b.dataset.d==='fav'?toggleFav(sel):toggleVisit(sel)});
+$('#detail').addEventListener('click',e=>{const b=e.target.closest('[data-d]');if(!b||!sel)return;b.dataset.d==='edit'?setDx(!dxOpen):b.dataset.d==='x'?select(null):b.dataset.d==='fav'?toggleFav(sel):toggleVisit(sel)});
 $('#detail').addEventListener('input',e=>{if(e.target.id!=='memo'||!sel)return;const v=e.target.value.trim();v?memos[sel]=v:delete memos[sel];saveLS('expoMemos',memos)});
 $('#detail').addEventListener('change',e=>{if(e.target.id==='memo')render(true)});
 $('#list').addEventListener('click',e=>{
