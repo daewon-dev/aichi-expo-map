@@ -125,7 +125,7 @@ html,body{margin:0;height:100%;background:var(--bg);color:var(--txt);font:14px/1
 #lightbox{display:none;position:fixed;inset:0;background:rgba(0,0,0,.92);z-index:60;flex-direction:column;align-items:center;justify-content:center;padding:12px;gap:12px}#lightbox.on{display:flex}
 #lbimg{max-width:100%;max-height:72dvh;object-fit:contain}.lbbar{display:flex;gap:8px;flex-wrap:wrap;justify-content:center}.lbbar .nbtn{margin:0;min-height:44px}
 #toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);background:#111827;color:#fff;padding:10px 16px;border-radius:3px;font-size:14px;z-index:70;display:none}
-.dx{margin-top:8px}.dxt{width:100%;text-align:left;border:1px solid var(--line);background:none;color:var(--txt);border-radius:3px;padding:9px 10px;font-size:14px;cursor:pointer}#detail{max-height:50dvh;overflow:auto}.dsec{font-size:13px;font-weight:700;margin:8px 0 4px;display:flex;gap:8px;align-items:center}.dtot{color:#1971ff}
+.dx{margin-top:8px}.dxdone{width:100%;min-height:44px;margin-top:10px}.dxt{position:sticky;top:0;z-index:1;background:var(--panel);width:100%;text-align:left;border:1px solid var(--line);background:none;color:var(--txt);border-radius:3px;padding:9px 10px;font-size:14px;cursor:pointer}#detail{max-height:50dvh;overflow:auto}.dsec{font-size:13px;font-weight:700;margin:8px 0 4px;display:flex;gap:8px;align-items:center}.dtot{color:#1971ff}
 .srow{display:flex;align-items:center;gap:8px;padding:3px 0;font-size:14px}.srow span{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .sadd{display:flex;gap:6px;margin-top:4px}.sadd input{min-width:0;padding:7px 9px;border:1px solid var(--line);border-radius:3px;font-size:16px;background:var(--bg);color:var(--txt)}.sadd #sl{flex:1}.sadd #sa{width:92px}
 .pstrip{display:flex;gap:6px;flex-wrap:wrap}.pstrip img{width:56px;height:56px;object-fit:cover;border-radius:3px;border:1px solid var(--line);cursor:pointer}
@@ -368,7 +368,7 @@ function extraHtml(d){
   return `<div class="dx">${head}<div class="dsec">${t('spend')}${sp.length?`<span class="dtot">${yen(spentOf(d.n))}${won(spentOf(d.n))}</span>`:''}</div>`
    +sp.map((x,i)=>`<div class="srow"><span>${esc(x.l||'—')}</span><b>${yen(x.a)}</b><button class="dbtn" data-sx="${i}">✕</button></div>`).join('')
    +`<div class="sadd"><input id="sl" maxlength="30" placeholder="${t('spendPh')}"><input id="sa" type="number" inputmode="numeric" min="0" placeholder="${t('amtPh')}"><button class="dbtn" data-sadd>${t('addB')}</button></div>`
-   +`<div class="dsec">${t('photos')} ${ph.length}/5</div><div class="pstrip">${ph.map((p,i)=>`<img src="${p.url}" data-pi="${i}" alt="">`).join('')}<label class="pbtn">📷<input id="pfile" type="file" accept="image/*" hidden></label></div></div>`;
+   +`<div class="dsec">${t('photos')} ${ph.length}/5</div><div class="pstrip">${ph.map((p,i)=>`<img src="${p.url}" data-pi="${i}" alt="">`).join('')}<label class="pbtn">📷<input id="pfile" type="file" accept="image/*" hidden></label></div><button class="nbtn ghost dxdone" data-dx>▴ ${t('close')}</button></div>`;
 }
 function addSpend(){
   if(!sel)return;const a=Math.round(+$('#sa').value);if(!(a>0))return;
