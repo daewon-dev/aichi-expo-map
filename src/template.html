@@ -39,7 +39,7 @@ html,body{margin:0;height:100%;background:var(--bg);color:var(--txt);font:14px/1
 #stage img{display:block;width:__W__px;height:__H__px;user-select:none;-webkit-user-drag:none;pointer-events:none}
 .hit{position:absolute;width:30px;height:20px;margin:-10px 0 0 -15px;border-radius:4px;cursor:pointer}
 .hit:hover{background:var(--hit);outline:1px solid var(--acc)}
-.hit.fav::after{content:"★";position:absolute;right:-4px;top:-9px;color:#f5b301;font-size:12px;text-shadow:0 0 2px #000}
+.hit.fav::after{content:"★";position:absolute;left:50%;bottom:100%;transform:translateX(-50%);line-height:1;color:#f5b301;font-size:calc(16px*min(var(--inv),4));text-shadow:0 0 2px #000,0 0 2px #000}
 #ring{position:absolute;pointer-events:none;display:none;width:60px;height:60px;margin:-30px 0 0 -30px;border:4px solid var(--acc);border-radius:50%;animation:pulse 1.1s infinite;transform-origin:center}
 @keyframes pulse{0%{box-shadow:0 0 0 0 rgba(232,89,12,.6)}100%{box-shadow:0 0 0 30px rgba(232,89,12,0)}}
 #tip{position:absolute;display:none;transform-origin:0 100%;background:#1d2024;color:#fff;padding:6px 10px;border-radius:3px;max-width:280px;font-size:14px;pointer-events:none;box-shadow:0 3px 10px rgba(0,0,0,.4)}
@@ -83,9 +83,8 @@ html,body{margin:0;height:100%;background:var(--bg);color:var(--txt);font:14px/1
 .chk{flex:none;border:0;background:none;font-size:18px;color:var(--line);cursor:pointer;padding:0 2px}
 .chk.on{color:#2ea043}
 .memoi{font-size:11px}
-.hit.vis,.hit.fav{transform:scale(min(var(--inv),3))} /* 전체보기에서도 보이도록 축소 비율만큼 키움 */
-.hit.vis{background:rgba(46,160,67,.55);outline:2px solid #2ea043}
-.hit.vis::before{content:"✓";position:absolute;left:-3px;top:-9px;color:#2ea043;font-size:13px;font-weight:700;text-shadow:0 0 2px #fff}
+.hit.vis{background:rgba(17,24,39,.14);outline:2px solid #111827}
+.hit.vis::before{content:"✓";position:absolute;left:50%;top:100%;transform:translateX(-50%);line-height:1;color:#fff;background:#111827;padding:.1em .3em;border-radius:3px;font-size:calc(15px*min(var(--inv),4));font-weight:900}
 .stopn{position:absolute;width:26px;height:26px;margin:-13px 0 0 -13px;border-radius:50%;background:#1971ff;color:#fff;font-weight:700;font-size:14px;display:flex;align-items:center;justify-content:center;border:3px solid #fff;box-shadow:0 2px 6px rgba(0,0,0,.5);pointer-events:none;transform:scale(calc(var(--inv,1)*.8))}
 .tlist{max-height:30dvh;overflow:auto;margin-top:6px}
 .tstop{display:flex;align-items:center;gap:8px;padding:6px 0;cursor:pointer;border-top:1px solid var(--line)}
