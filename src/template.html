@@ -442,7 +442,7 @@ function renderDetail(){
   document.body.classList.toggle('edit',!!sel&&dxOpen&&!navMode);
   if(!sel){D.style.display='none';D.innerHTML='';return}
   const d=byN[sel];D.style.display='block';
-  D.innerHTML=`<div class="dhead"><span class="num H-${d.h}">${d.n}</span><b>${esc(nm(d))}</b><button class="dbtn fav${favs.has(d.n)?' on':''}" data-d="fav">★</button><button class="dbtn edt${dxOpen?' on':''}" data-d="edit" title="${t('editT')}" aria-label="${t('editT')}">📝</button><button class="dbtn vis${visited.has(d.n)?' on':''}" data-d="vis" title="${t('visBtn')}" aria-label="${t('visBtn')}">✓</button><button class="dbtn" data-d="x" title="${t('cl')}">✕</button></div>${dxOpen?extraHtml(d):sumHtml(d)}`;
+  D.innerHTML=`<div class="dhead"><span class="num H-${d.h}">${d.n}</span><b>${esc(nm(d))}</b><button class="dbtn edt${dxOpen?' on':''}" data-d="edit" title="${t('editT')}" aria-label="${t('editT')}">📝</button><button class="dbtn fav${favs.has(d.n)?' on':''}" data-d="fav">★</button><button class="dbtn vis${visited.has(d.n)?' on':''}" data-d="vis" title="${t('visBtn')}" aria-label="${t('visBtn')}">✓</button><button class="dbtn" data-d="x" title="${t('cl')}">✕</button></div>${dxOpen?extraHtml(d):sumHtml(d)}`;
 }
 $('#detail').addEventListener('click',e=>{const b=e.target.closest('[data-d]');if(!b||!sel)return;b.dataset.d==='edit'?setDx(!dxOpen):b.dataset.d==='x'?select(null):b.dataset.d==='fav'?toggleFav(sel):toggleVisit(sel)});
 $('#detail').addEventListener('input',e=>{if(e.target.id!=='memo'||!sel)return;const v=e.target.value.trim();v?memos[sel]=v:delete memos[sel];saveLS('expoMemos',memos)});
