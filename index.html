@@ -32,6 +32,7 @@ html,body{margin:0;height:100%;background:var(--bg);color:var(--txt);font:14px/1
 .num{flex:none;min-width:42px;text-align:center;font-weight:700;border-radius:3px;padding:1px 0;color:#fff;font-size:13px}
 .nm{flex:1;min-width:0}
 .nm b{font-weight:600;word-break:break-word}
+.nm small.desc{display:none}.item.sel:not(.shut) small.desc,#list.searching .item:not(.shut) small.desc{display:block;-webkit-line-clamp:unset}.more{color:var(--sub);font-size:11px;margin-left:6px}.item.sel:not(.shut) .more,#list.searching .item:not(.shut) .more{display:none}
 .nm small{display:block;color:var(--sub);font-size:12px;word-break:break-word}
 .star{flex:none;border:0;background:none;font-size:18px;color:var(--line);cursor:pointer;padding:0 2px}
 .star.on{color:#f5b301}
@@ -167,6 +168,7 @@ const saveFavs=()=>{try{localStorage.setItem('expoFavs',JSON.stringify([...favs]
 let visited=new Set(),memos={};
 try{visited=new Set(JSON.parse(localStorage.getItem('expoVisited')||'[]'));memos=JSON.parse(localStorage.getItem('expoMemos')||'{}')}catch(e){}
 const saveLS=(k,v)=>{try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}};
+let shutN='';  // 선택된 부스의 설명을 다시 눌러 접어 둔 번호
 let hall='ALL',flt='',sel=null,q='';  // hall: 홀 필터 / flt: ''|'★'|'✓' (홀 필터와 함께 적용)
 
 // ---- 정규화 (전각→반각, 소문자)
@@ -228,6 +230,7 @@ DATA.forEach(d=>{const h=document.createElement('div');h.className='hit';h.style
 
 let saved=null; // 선택 전 화면 상태 (해제 시 복원)
 function select(n,o={}){
+  if(n!==sel){shutN='';document.querySelectorAll('.item.shut').forEach(e=>e.classList.remove('shut'))}
   if(n&&navMode===1){me=n;navMode=2;updateMe()}
   else if(n&&navMode===2&&n!==me)navMode=3;
   else if(!n&&navMode===3)navMode=2;
@@ -259,8 +262,8 @@ function render(keep){
   if(terms.length)rows.sort((a,b)=>(b.tk.includes(cq)-a.tk.includes(cq))); // 업체명에 걸린 것 먼저 (정렬은 안정적)
   $('#count').textContent=t('count')(rows.length)+(flt==='★'?t('countFav'):flt==='✓'?t('countVis'):'')+(fuzzy?' · '+t('fuzzy'):'');
   const none=!rows.length&&q.trim()?`<div class="nores">${t('noRes')}<br><a href="https://www.google.com/search?q=${encodeURIComponent(q.trim())}" target="_blank" rel="noopener">${t('webQ')}“${esc(q.trim())}”</a></div>`:'';
-  L.innerHTML=none+rows.map(d=>`<div class="item${sel===d.n?' sel':''}${visited.has(d.n)?' vis':''}" data-n="${d.n}"><span class="num H-${d.h}">${d.n}</span><div class="nm"><b>${esc(nm(d))}</b>${memos[d.n]?' <span class="memoi">📝</span>':''}${d.s.length?`<small>${esc(d.s.join(' '))}</small>`:''}${d.g?`<small>[${esc(d.g)}]</small>`:''}</div><button class="chk${visited.has(d.n)?' on':''}" data-c="${d.n}">✓</button><button class="star${favs.has(d.n)?' on':''}" data-s="${d.n}">★</button></div>`).join('');
-  L.scrollTop=keep?st:0;renderChips();
+  L.innerHTML=none+rows.map(d=>`<div class="item${sel===d.n?' sel':''}${shutN===d.n?' shut':''}${visited.has(d.n)?' vis':''}" data-n="${d.n}"><span class="num H-${d.h}">${d.n}</span><div class="nm"><b>${esc(nm(d))}</b>${memos[d.n]?' <span class="memoi">📝</span>':''}${d.s.length?`<span class="more">▾</span><small class="desc">${esc(d.s.join(' '))}</small>`:''}${d.g?`<small>[${esc(d.g)}]</small>`:''}</div><button class="chk${visited.has(d.n)?' on':''}" data-c="${d.n}">✓</button><button class="star${favs.has(d.n)?' on':''}" data-s="${d.n}">★</button></div>`).join('');
+  L.classList.toggle('searching',!!q.trim());L.scrollTop=keep?st:0;renderChips();
   DATA.forEach(d=>{const h=hits[d.n];h.classList.toggle('fav',favs.has(d.n));h.classList.toggle('vis',visited.has(d.n))});
 }
 function toggleFav(n){favs.has(n)?favs.delete(n):favs.add(n);saveFavs();if(navMode===4)replanTour();render(true);renderDetail();updateBar()}
@@ -281,7 +284,9 @@ $('#detail').addEventListener('change',e=>{if(e.target.id==='memo')render(true)}
 $('#list').addEventListener('click',e=>{
   const s=e.target.closest('[data-s]');if(s){toggleFav(s.dataset.s);return}
   const c=e.target.closest('[data-c]');if(c){toggleVisit(c.dataset.c);return}
-  const it=e.target.closest('.item');if(it)select(it.dataset.n,{zoom:true});
+  const it=e.target.closest('.item');if(!it)return;
+  if(it.dataset.n===sel){shutN=shutN===sel?'':sel;it.classList.toggle('shut');return} // 선택된 줄을 다시 누르면 설명 접기/펼치기
+  select(it.dataset.n,{zoom:true});
 });
 $('#q').addEventListener('input',e=>{q=e.target.value;
   if(q.trim()&&(hall!=='ALL'||flt)){hall='ALL';flt='';renderChips()}
